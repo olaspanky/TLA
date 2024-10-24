@@ -27,7 +27,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "https://server-l7a5zf9ai-olaspankys-projects.vercel.app", // Change this linessrfgs
+        target: "https://server-by6klkyl4-olaspankys-projects.vercel.app", // Change this linessrfgs
         changeOrigin: true,
       },
     },
