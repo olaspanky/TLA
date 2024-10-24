@@ -1,3 +1,20 @@
+// import { defineConfig } from "vite";
+// import react from "@vitejs/plugin-react";
+
+// // https://vitejs.dev/config/
+// export default defineConfig({
+//   plugins: [react()],
+
+//   server: {
+//     port: 3000,
+//     proxy: {
+//       "/api": {
+//         target: "http://localhost:8800",
+//         changeOrigin: true,
+//       },
+//     },
+//   },
+// });
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -9,7 +26,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "https://j3wvqmh5-8800.uks1.devtunnels.ms",
+        target: "https://server-olaspanky-olaspankys-projects.vercel.app", // Change this line
         changeOrigin: true,
       },
     },
