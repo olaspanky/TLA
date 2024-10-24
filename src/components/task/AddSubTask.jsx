@@ -175,7 +175,6 @@ const AddSubTask = ({ open, setOpen, id }) => {
 
   const [addSubTask] = useCreateSubTaskMutation();
   
-  // Fetch the existing tasks to determine the tag number
   const { data: tasks } = useGetSingleTaskQuery(); // Replace with your task fetching logic
 
   const handleOnSubmit = async (data) => {
