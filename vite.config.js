@@ -15,6 +15,7 @@
 //     },
 //   },
 // });
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -26,7 +27,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "https://server-olaspanky-olaspankys-projects.vercel.app", // Change this line
+        target: "server-l7a5zf9ai-olaspankys-projects.vercel.app", // Change this line
         changeOrigin: true,
       },
     },
