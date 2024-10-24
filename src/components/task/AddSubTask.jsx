@@ -164,7 +164,7 @@ const AddSubTask = ({ open, setOpen, id }) => {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      objectives: Array(10).fill({ description: "" }), // Initialize 10 objective fields
+      objectives: Array(10).fill({ description: "" }), // Initialize 10 objective field
     },
   });
 
