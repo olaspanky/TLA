@@ -178,7 +178,7 @@ const AddTask = ({ open, setOpen, task }) => {
                 setSelected={setPriority}
               />
 
-              <div className="w-full flex items-center justify-center mt-4">
+              <div className="w-full flex hidden items-center justify-center mt-4">
                 <label
                   className="flex items-center gap-1 text-base text-ascent-2 hover:text-ascent-1 cursor-pointer my-4"
                   htmlFor="imgUpload"
