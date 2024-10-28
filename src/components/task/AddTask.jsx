@@ -58,13 +58,13 @@ const AddTask = ({ open, setOpen, task }) => {
       try {
         await uploadFile(file);
       } catch (error) {
-        console.error("Error Uploading FIle", error.message);
+        console.error("Error Uploading File", error.message);
         return;
       } finally {
         setUploading(false);
       }
     }
-
+  
     try {
       const newData = {
         ...data,
@@ -77,16 +77,18 @@ const AddTask = ({ open, setOpen, task }) => {
         ? await updateTask({ ...newData, _id: task._id }).unwrap()
         : await createTask(newData).unwrap();
       toast.success(res.message);
-
-      setTimeout(() => {
-        setOpen(false);
-      }, 500);
+  
+      setOpen(false);
+      uploadedFileURLs.length = 0; // Clear uploaded URLs after use
+  
+      // Reload page to show the new task immediately
+      window.location.reload();
     } catch (err) {
       console.log(err);
       toast.error(err.data?.message || err.error);
     }
   };
-
+  
   const handleSelect = (e) => {
     setAssets(e.target.files);
   };

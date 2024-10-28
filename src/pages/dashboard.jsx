@@ -161,21 +161,21 @@ const totals = data?.tasks || {}; // Safeguard for undefined totals
   const stats = [
     {
       _id: "1",
-      label: "TOTAL TASK",
+      label: "TOTAL OBJECTIVE(s)",
       total: data?.totalTasks || 0,
       icon: <FaNewspaper />,
       bg: "bg-[#1d4ed8]",
     },
     {
       _id: "2",
-      label: "COMPLETED TASK",
+      label: "COMPLETED OBJECTIVE(s)",
       total: totals["completed"] || 0,
       icon: <MdAdminPanelSettings />,
       bg: "bg-[#0f766e]",
     },
     {
       _id: "3",
-      label: "TASK IN PROGRESS ",
+      label: "OBJECTIVE(s) IN PROGRESS ",
       total: totals["in progress"] || 0,
       icon: <LuClipboardEdit />,
       bg: "bg-[#f59e0b]",
