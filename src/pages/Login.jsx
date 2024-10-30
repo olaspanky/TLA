@@ -68,9 +68,7 @@ PBR TRAFFIC APP            </span>
               <p className='text-blue-600 text-3xl font-bold text-center'>
                 Welcome back!
               </p>
-              <p className='text-center text-base text-gray-700 '>
-                Keep all your credential safe.
-              </p>
+             
             </div>
 
             <div className='flex flex-col gap-y-5'>
