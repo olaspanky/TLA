@@ -91,6 +91,34 @@ Traffic Pulse           </span>
     {errors.email && <span className="text-red-600 text-sm">{errors.email.message}</span>}
   </div>
 
+  {/* Security Question */}
+  <div className="flex flex-col">
+              <label htmlFor="securityQuestion" className="text-sm font-medium text-gray-700">Security Question</label>
+              <input
+                id="securityQuestion"
+                name="securityQuestion"
+                type="text"
+                placeholder="Enter a security question"
+                {...register("securityQuestion", { required: "Security question is required" })}
+                className={`border p-2 mt-1 rounded ${errors.securityQuestion ? "border-red-600" : "border-gray-300"}`}
+              />
+              {errors.securityQuestion && <span className="text-red-600 text-sm">{errors.securityQuestion.message}</span>}
+            </div>
+
+            {/* Security Answer */}
+            <div className="flex flex-col">
+              <label htmlFor="securityAnswer" className="text-sm font-medium text-gray-700">Security Answer</label>
+              <input
+                id="securityAnswer"
+                name="securityAnswer"
+                type="text"
+                placeholder="Enter the answer to your security question"
+                {...register("securityAnswer", { required: "Security answer is required" })}
+                className={`border p-2 mt-1 rounded ${errors.securityAnswer ? "border-red-600" : "border-gray-300"}`}
+              />
+              {errors.securityAnswer && <span className="text-red-600 text-sm">{errors.securityAnswer.message}</span>}
+            </div>
+
   {/* Password */}
   <div className="flex flex-col">
     <label htmlFor="password" className="text-sm font-medium text-gray-700">

@@ -68,18 +68,27 @@ export const taskApiSlice = apiSlice.injectEndpoints({
             }),
           }),
           
-          updateSubTask: builder.mutation({
+          updateSubTaskItem: builder.mutation({
             query: ({ taskId, subTaskId, objectiveId, updateData }) => ({
-                url: `${TASKS_URL}/update-subtask/${taskId}/${subTaskId}/${objectiveId}`,
+                url: `${TASKS_URL}/update-subtaskItem/${taskId}/${subTaskId}/${objectiveId}`,
                 method: "PUT",
                 body: updateData,
                 credentials: "include",
             }),
           }),
-          
-          
 
-       
+        
+
+        updateSubTask: builder.mutation({
+          query: ({ taskId, subTaskId, updateData }) => ({
+            url: `${TASKS_URL}/update-subtask/${taskId}/${subTaskId}`,
+            method: "PUT",
+            body: updateData,
+            credentials: "include",
+          }),
+        }),
+          
+          
         
     }),
 });
@@ -88,5 +97,5 @@ export const {
    useGetDashboardStatsQuery,
    useGetAllTaskQuery, useCraeteTaskMutation, 
    useDuplicateTaskMutation, useUpdateTaskMutation, useTrashTaskMutation,
-   useCreateSubTaskMutation, useGetSingleTaskQuery, useUpdateSubTaskMutation
+   useCreateSubTaskMutation, useGetSingleTaskQuery, useUpdateSubTaskItemMutation, useUpdateSubTaskMutation
 } = taskApiSlice;

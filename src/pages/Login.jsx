@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect , useState} from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Textbox from "../components/Textbox";
@@ -9,6 +9,7 @@ import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css'; // Import the CSS for toast notifications
 import { setCredentials } from "../redux/slices/authSlice";
 import Loading from "../components/Loader"
+import ForgotPassword from "../components/ForgotPassword";
 const Login = () => {
   const { user } = useSelector((state) => state.auth);
   const {
@@ -20,6 +21,8 @@ const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch()
   const[login, {isLoading}] = useLoginMutation()
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false); // State to control the modal
+
 
   const submitHandler = async (data) => {
     try{
@@ -95,7 +98,10 @@ Traffic Pulse           </span>
                 error={errors.password ? errors.password.message : ""}
               />
 
-              <span className='text-sm text-gray-500 hover:text-blue-600 hover:underline cursor-pointer'>
+<span
+                className="text-sm text-gray-500 hover:text-blue-600 hover:underline cursor-pointer"
+                onClick={() => setIsForgotPasswordOpen(true)} // Open the modal
+              >
                 Forget Password?
               </span>
 
@@ -109,6 +115,21 @@ Traffic Pulse           </span>
           <ToastContainer /> 
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {isForgotPasswordOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <div className="modal-content w-full max-w-md bg-white  rounded-lg shadow-md relative max-h-[50vh] overflow-auto">
+                        <button
+                            className="absolute top-3 right-3 text-gray-700 hover:text-gray-900"
+                            onClick={() => setIsForgotPasswordOpen(false)} // Close the modal
+                        >
+                            &times; {/* Close Icon */}
+                        </button>
+                        <ForgotPassword /> {/* Render ForgotPassword component */}
+                    </div>
+                </div>
+            )}
     </div>
   );
 };

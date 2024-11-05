@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import Tabs from "../components/Tabs";
 import {
   useGetSingleTaskQuery,
-  useUpdateSubTaskMutation,
+  useUpdateSubTaskItemMutation, useUpdateSubTaskMutation
 } from "../redux/slices/api/taskApiSlice";
 import Loading from "../components/Loader";
 import Button from "../components/Button";
@@ -21,7 +21,11 @@ const TaskDetails = () => {
   const [selected, setSelected] = useState(0);
   const [expandedSubTask, setExpandedSubTask] = useState(null);
   const [editingObjective, setEditingObjective] = useState(null);
-  const [updateSubTask, { isLoading: isUpdating }] = useUpdateSubTaskMutation();
+  const [updateSubTaskItem, { isLoading: isUpdating }] = useUpdateSubTaskItemMutation();
+  const [editingSubtask, setEditingSubtask] = useState(null);
+  const [updateSubTask, { isLoading: isUpdatingSubTask }] = useUpdateSubTaskMutation();
+ 
+
   const [localTaskData, setLocalTaskData] = useState(null);
 
   useEffect(() => {
@@ -33,7 +37,7 @@ const TaskDetails = () => {
 
   const handleObjectiveUpdate = async (subTaskId, objectiveId, updatedObjective) => {
     try {
-      const result = await updateSubTask({
+      const result = await updateSubTaskItem({
         taskId: id,
         subTaskId,
         objectiveId,
@@ -70,6 +74,74 @@ const TaskDetails = () => {
     }
   };
 
+  const handleUpdateSubtask = async () => {
+    if (!editingSubtask) {
+      console.error("No subtask is currently being edited.");
+      toast.error("No subtask selected for update.");
+      return;
+    }
+  
+    console.log("Updating subtask ID:", editingSubtask._id);
+    console.log("Current editing subtask data:", editingSubtask); // Log current state
+  
+    try {
+      const updatedSubtask = {
+        title: editingSubtask.title,
+        tag: editingSubtask.tag,
+        date: editingSubtask.date,
+        stage: editingSubtask.stage,
+        objectives: editingSubtask.objectives,
+      };
+  
+      console.log("Data to send for update:", updatedSubtask); // Log the data sent to API
+  
+      const result = await updateSubTask({
+        taskId: id,
+        subTaskId: editingSubtask._id,
+        updateData: updatedSubtask,
+      }).unwrap();
+  
+      console.log(result); // Log the result to see the response
+  
+      toast.success("Subtask updated successfully");
+      setLocalTaskData(prevData => ({
+        ...prevData,
+        subTasks: prevData.subTasks.map(subTask =>
+          subTask._id === editingSubtask._id ? { ...editingSubtask } : subTask
+        ),
+      }));
+      setEditingSubtask(null);
+    } catch (error) {
+      console.error("Error updating subtask:", error); // Log the error for debugging
+      toast.error("An error occurred while updating the subtask.");
+    }
+  };
+  
+  
+  
+  
+
+  const handleAddObjective = () => {
+    setEditingSubtask(prevSubtask => {
+      const newObjective = { _id: Date.now().toString(), description: "", status: "todo" };
+      return {
+        ...prevSubtask,
+        objectives: [...prevSubtask.objectives, newObjective],
+      };
+    });
+  };
+  
+  
+
+  const handleRemoveObjective = (objectiveId) => {
+    setEditingSubtask(prevSubtask => ({
+      ...prevSubtask,
+      objectives: prevSubtask.objectives.filter(
+        objective => objective._id !== objectiveId
+      ),
+    }));
+  };
+
   const handleStageChange = async (subTaskId, newStage) => {
     try {
       await updateSubTask({
@@ -104,7 +176,7 @@ const TaskDetails = () => {
           <div className="w-full flex flex-col md:flex-row gap-6 bg-white shadow-md p-8 overflow-y-auto rounded-lg">
             <div className="w-full md:w-1/2 space-y-8">
               <div className="space-y-6 py-6">
-                <p className="text-gray-600 font-semibold text-sm">SUB-TASKS lol</p>
+                <p className="text-gray-600 font-semibold text-sm">SUB-TASKS </p>
                 <div className="space-y-8">
                 {localTaskData?.subTasks?.map((subTask, index) => {
     const totalObjectives = subTask?.objectives?.length || 0;
@@ -167,6 +239,9 @@ const TaskDetails = () => {
                               </p>
                               </div>
                               <p className="text-gray-700 font-medium">{subTask?.title}</p>
+                              <button onClick={() => setEditingSubtask(subTask)} className="text-blue-500 underline">
+                        Edit
+                      </button>
                             </div>
                           </div>
                           <button
@@ -176,6 +251,94 @@ const TaskDetails = () => {
                             {expandedSubTask === subTask._id ? "Hide" : "Show"} Task Items 1
                           </button>
                         </div>
+
+                        {/* Edit Subtask Modal */}
+{editingSubtask && (
+  <Modal onClose={() => setEditingSubtask(null)} open={!!editingSubtask}>
+    <h2 className="text-lg font-semibold mb-4">Edit Subtask</h2>
+    
+    <div className="mb-4">
+      <label htmlFor="subtask-title" className="block text-sm font-medium text-gray-700">
+        Title
+      </label>
+      <input
+        id="subtask-title"
+        type="text"
+        value={editingSubtask.title}
+        onChange={(e) =>
+          setEditingSubtask({ ...editingSubtask, title: e.target.value })
+        }
+        placeholder="Enter subtask title"
+        className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+      />
+    </div>
+
+    <div className="mb-4">
+      <label htmlFor="subtask-tag" className="block text-sm font-medium text-gray-700">
+        Tag
+      </label>
+      <input
+        id="subtask-tag"
+        type="text"
+        value={editingSubtask.tag}
+        onChange={(e) =>
+          setEditingSubtask({ ...editingSubtask, tag: e.target.value })
+        }
+        placeholder="Enter subtask tag"
+        className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+      />
+    </div>
+{/* 
+    <div className="mb-4">
+      <button
+        onClick={handleAddObjective}
+        className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700"
+      >
+        Add Objective
+      </button>
+    </div> */}
+
+    <div className="space-y-4 mb-4">
+      {editingSubtask.objectives.map((objective) => (
+        <div key={objective._id} className="flex items-center justify-between border rounded-md p-2 bg-gray-50">
+          <input
+            type="text"
+            value={objective.description}
+            onChange={(e) => {
+              const updatedObjectives = editingSubtask.objectives.map((obj) =>
+                obj._id === objective._id
+                  ? { ...obj, description: e.target.value }
+                  : obj
+              );
+              setEditingSubtask({ ...editingSubtask, objectives: updatedObjectives });
+            }}
+            placeholder="Objective Description"
+            className="flex-1 border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+          <button
+            onClick={() => handleRemoveObjective(objective._id)}
+            className="ml-2 bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600"
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+    </div>
+
+    <div className="flex justify-end">
+      <button
+        onClick={handleUpdateSubtask}
+        disabled={isUpdating}
+        className={`bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 ${
+          isUpdating ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+      >
+        {isUpdating ? "Updating..." : "Save Changes"}
+      </button>
+    </div>
+  </Modal>
+)}
+
 
                         {expandedSubTask === subTask._id && (
                           <div>
