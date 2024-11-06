@@ -7,11 +7,12 @@ import { toast } from "sonner";
 import Tabs from "../components/Tabs";
 import {
   useGetSingleTaskQuery,
-  useUpdateSubTaskItemMutation, useUpdateSubTaskMutation
+  useUpdateSubTaskItemMutation, useUpdateSubTaskMutation, useDeleteSubTaskMutation
 } from "../redux/slices/api/taskApiSlice";
 import Loading from "../components/Loader";
 import Button from "../components/Button";
 import Modal from "../components/ModalWrapper";
+import ConfirmModal from "../components/ConfirmModal"
 
 const TABS = [{ title: "Activities/Timeline", icon: <FaTasks /> }];
 
@@ -24,6 +25,8 @@ const TaskDetails = () => {
   const [updateSubTaskItem, { isLoading: isUpdating }] = useUpdateSubTaskItemMutation();
   const [editingSubtask, setEditingSubtask] = useState(null);
   const [updateSubTask, { isLoading: isUpdatingSubTask }] = useUpdateSubTaskMutation();
+  const [deleteSubTask, { isLoading: isDeleting }] = useDeleteSubTaskMutation(); // Define the delete subtask mutation
+
  
 
   const [localTaskData, setLocalTaskData] = useState(null);
@@ -33,6 +36,39 @@ const TaskDetails = () => {
       setLocalTaskData(data.task);
     }
   }, [data]);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [subTaskToDelete, setSubTaskToDelete] = useState(null);
+
+  const openModal = (subTaskId) => {
+    setSubTaskToDelete(subTaskId);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    // Call the delete function and close the modal
+    handleDeleteSubtask(subTaskToDelete);
+    setIsModalOpen(false);
+    setSubTaskToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setIsModalOpen(false);
+    setSubTaskToDelete(null);
+  };
+
+  const handleDeleteSubtask = async (subTaskId) => {
+    try {
+      await deleteSubTask({ taskId: id, subTaskId }).unwrap();
+      setLocalTaskData(prevData => ({
+        ...prevData,
+        subTasks: prevData.subTasks.filter(subTask => subTask._id !== subTaskId),
+      }));
+      toast.success("Subtask deleted successfully");
+    } catch (error) {
+      toast.error(error.message || "Failed to delete subtask");
+    }
+  };
 
 
   const handleObjectiveUpdate = async (subTaskId, objectiveId, updatedObjective) => {
@@ -242,6 +278,10 @@ const TaskDetails = () => {
                               <button onClick={() => setEditingSubtask(subTask)} className="text-blue-500 underline">
                         Edit
                       </button>
+
+                      <button onClick={() => openModal(subTask._id)} className="text-red-500 underline ml-2">
+        Delete
+      </button>
                             </div>
                           </div>
                           <button
@@ -288,15 +328,7 @@ const TaskDetails = () => {
         className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
       />
     </div>
-{/* 
-    <div className="mb-4">
-      <button
-        onClick={handleAddObjective}
-        className="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700"
-      >
-        Add Objective
-      </button>
-    </div> */}
+
 
     <div className="space-y-4 mb-4">
       {editingSubtask.objectives.map((objective) => (
@@ -399,6 +431,15 @@ const TaskDetails = () => {
                       </div>
                     );
                   })}
+
+                   {/* Confirmation modal */}
+      {isModalOpen && (
+        <ConfirmModal 
+          message="Are you sure you want to delete this subtask?" 
+          onConfirm={handleConfirmDelete} 
+          onCancel={handleCancelDelete} 
+        />
+      )}
                 </div>
               </div>
             </div>
