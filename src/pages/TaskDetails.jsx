@@ -449,60 +449,71 @@ const TaskDetails = () => {
 
       {/* Objective Edit Modal */}
       {editingObjective && (
-        <Modal
-          title="Edit Objective"
-          onClose={() => setEditingObjective(null)}
-          open={!!editingObjective}
-        >
-          <div className="flex flex-col gap-4">
-            <input
-              type="text"
-              value={editingObjective.objective.description}
-              onChange={(e) =>
-                setEditingObjective({
-                  ...editingObjective,
-                  objective: {
-                    ...editingObjective.objective,
-                    description: e.target.value,
-                  },
-                })
-              }
-              className="border border-gray-300 rounded-md p-2"
-              placeholder="Objective description"
-            />
-            <select
-              value={editingObjective.objective.status}
-              onChange={(e) =>
-                setEditingObjective({
-                  ...editingObjective,
-                  objective: {
-                    ...editingObjective.objective,
-                    status: e.target.value,
-                  },
-                })
-              }
-              className="border border-gray-300 rounded-md p-2"
-            >
-              <option value="todo">To Do</option>
-              <option value="in progress">In Progress</option>
-              <option value="completed">Completed</option>
-            </select>
+  <Modal
+    title="Edit Objective"
+    onClose={() => setEditingObjective(null)}
+    open={!!editingObjective}
+  >
+    <div className="relative flex flex-col gap-4">
+      {/* Close Button */}
 
-            <button
-              onClick={() =>
-                handleObjectiveUpdate(
-                  editingObjective.subTaskId,
-                  editingObjective.objective._id,
-                  editingObjective.objective
-                )
-              }
-              className="bg-indigo-600 text-white p-2 rounded-md"
-            >
-              Save
-            </button>
-          </div>
-        </Modal>
-      )}
+
+      <input
+        type="text"
+        value={editingObjective.objective.description}
+        onChange={(e) =>
+          setEditingObjective({
+            ...editingObjective,
+            objective: {
+              ...editingObjective.objective,
+              description: e.target.value,
+            },
+          })
+        }
+        className="border border-gray-300 rounded-md p-2"
+        placeholder="Objective description"
+      />
+      <select
+        value={editingObjective.objective.status}
+        onChange={(e) =>
+          setEditingObjective({
+            ...editingObjective,
+            objective: {
+              ...editingObjective.objective,
+              status: e.target.value,
+            },
+          })
+        }
+        className="border border-gray-300 rounded-md p-2"
+      >
+        <option value="todo">To Do</option>
+        <option value="in progress">In Progress</option>
+        <option value="completed">Completed</option>
+      </select>
+<div className="flex gap-3 w-full">
+<button
+        onClick={() =>
+          handleObjectiveUpdate(
+            editingObjective.subTaskId,
+            editingObjective.objective._id,
+            editingObjective.objective
+          )
+        }
+        className="bg-blue-600 text-white p-2 w-full rounded-md"
+      >
+        Save
+      </button>
+
+      <button
+        onClick={() => setEditingObjective(null)}
+        className="bg-red-600 text-white p-2 w-full rounded-md"      >
+Close      </button>
+</div>
+
+    </div>
+  </Modal>
+)}
+
     </div>
   );
 };
