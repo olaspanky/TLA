@@ -55,7 +55,7 @@ const Trash = () => {
   const TableHeader = () => (
     <thead className='border-b border-gray-300'>
       <tr className='text-black  text-left'>
-        <th className='py-2'>Obectives</th>
+        <th className='py-2'>Objectives</th>
         <th className='py-2'>Priority</th>
         <th className='py-2'>Stage</th>
         <th className='py-2 line-clamp-1'>Modified On</th>
