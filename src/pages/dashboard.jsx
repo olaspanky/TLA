@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   MdAdminPanelSettings,
   MdKeyboardArrowDown,
@@ -16,8 +16,6 @@ import { BGS, PRIOTITYSTYELS, TASK_TYPE, getInitials } from "../utils";
 import UserInfo from "../components/UserInfo";
 import { useGetDashboardStatsQuery } from "../redux/slices/api/taskApiSlice";
 import Loading from "../components/Loader"
-import { useNavigate } from "react-router-dom";  // Import useNavigate for redirection
-
 
 const TaskTable = ({ tasks }) => {
   const ICONS = {
@@ -153,14 +151,7 @@ const UserTable = ({ users }) => {
 };
 const Dashboard = () => {
 const {data, isLoading, error} = useGetDashboardStatsQuery()
-const navigate = useNavigate();  // Initialize useNavigate
 
-useEffect(() => {
-  if (!data || isLoading || error) {
-    // Redirect to login if data is unavailable or loading state is active
-    navigate("/login");
-  }
-}, [data, isLoading, error, navigate]);
 
 if (isLoading) return (
   <div className="py-10">
