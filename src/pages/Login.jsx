@@ -118,18 +118,20 @@ Traffic Pulse           </span>
 
       {/* Forgot Password Modal */}
       {isForgotPasswordOpen && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="modal-content w-full max-w-md bg-white  rounded-lg shadow-md relative max-h-[50vh] overflow-auto">
-                        <button
-                            className="absolute top-3 right-3 text-gray-700 hover:text-gray-900"
-                            onClick={() => setIsForgotPasswordOpen(false)} // Close the modal
-                        >
-                            &times; {/* Close Icon */}
-                        </button>
-                        <ForgotPassword /> {/* Render ForgotPassword component */}
-                    </div>
-                </div>
-            )}
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="modal-content flex justify-center items-center w-full max-w-md bg-white rounded-lg shadow-md relative h-[500px] overflow-hidden">
+            <button
+                className="absolute top-3 right-3 text-gray-700 hover:text-gray-900 z-10"
+                onClick={() => setIsForgotPasswordOpen(false)}
+            >
+                &times; {/* Close Icon */}
+            </button>
+            <div className=" w-full">
+                <ForgotPassword />
+            </div>
+        </div>
+    </div>
+)}
     </div>
   );
 };

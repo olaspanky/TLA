@@ -1,11 +1,10 @@
-import { useForm, useFieldArray } from "react-hook-form"; 
+import { useForm, useFieldArray } from "react-hook-form";
 import ModalWrapper from "../ModalWrapper";
 import { Dialog } from "@headlessui/react";
 import Textbox from "../Textbox";
 import Button from "../Button";
-import { useCreateSubTaskMutation, useGetSingleTaskQuery } from "../../redux/slices/api/taskApiSlice"; 
+import { useCreateSubTaskMutation, useGetSingleTaskQuery } from "../../redux/slices/api/taskApiSlice";
 import { toast } from "sonner";
-
 const AddSubTask = ({ open, setOpen, id }) => {
   const {
     register,
@@ -15,7 +14,10 @@ const AddSubTask = ({ open, setOpen, id }) => {
   } = useForm({
     defaultValues: {
       objectives: [{ description: "" }], // Start with one objective
-      date: new Date().toISOString().split("T")[0], // Set default to today's date
+      date: new Date().toISOString().split("T")[0], // Default to today's date
+      startDate: "", // Default start date
+      completionDate: "", // Default completion date
+      team: [], // Default empty team
     },
   });
 
@@ -25,8 +27,7 @@ const AddSubTask = ({ open, setOpen, id }) => {
   });
 
   const [addSubTask] = useCreateSubTaskMutation();
-  
-  const { data: tasks } = useGetSingleTaskQuery(); // Replace with your task fetching logic
+  const { data: taskData } = useGetSingleTaskQuery(id); // Fetch the parent task details
 
   const handleOnSubmit = async (data) => {
     if (!id) {
@@ -34,22 +35,21 @@ const AddSubTask = ({ open, setOpen, id }) => {
       return;
     }
 
-    const taskCount = tasks ? tasks.length : 0;  
+    const taskCount = taskData?.task?.subTasks?.length || 0;
     const nextTag = (taskCount % 5) + 1;
 
-    const taskData = {
+    const taskDataToSend = {
       ...data,
       tag: nextTag,
     };
 
     try {
-      const res = await addSubTask({ data: taskData, id }).unwrap();
+      await addSubTask({ data: taskDataToSend, id }).unwrap();
       toast.success("Sub Task Added");
       setTimeout(() => {
         setOpen(false);
       }, 500);
       window.location.reload();
-
     } catch (err) {
       console.log(err);
       toast.error(err?.data?.message || "Failed to add subtask");
@@ -75,48 +75,50 @@ const AddSubTask = ({ open, setOpen, id }) => {
 
           <div className="flex items-center gap-4">
             <Textbox
-              placeholder="Date"
+              placeholder="Start Date"
               type="date"
-              name="date"
-              label="Task Date"
+              name="startDate"
+              label="Start Date"
               className="w-full rounded"
-              register={register("date")}
-              error={errors.date ? errors.date.message : ""}
+              register={register("startDate", { required: "Start date is required!" })}
+              error={errors.startDate ? errors.startDate.message : ""}
             />
             <Textbox
-              placeholder="Tag (Auto)"
-              type="text"
-              name="tag"
-              label=""
-              className="w-full rounded hidden"
-              value={`Tag ${tasks ? (tasks.length % 5) + 1 : 1}`}  
-              disabled
+              placeholder="Completion Date"
+              type="date"
+              name="completionDate"
+              label="Completion Date"
+              className="w-full rounded"
+              register={register("completionDate", { required: "Completion date is required!" })}
+              error={errors.completionDate ? errors.completionDate.message : ""}
             />
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* <label className="block text-sm font-medium text-gray-700">Stage</label> */}
+          {/* Team Selection */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700">Assign Team Members</label>
             <select
-              name="stage"
-              className="w-full rounded hidden"
-              {...register("stage", { required: "Stage is required!" })}
+              name="team"
+              className="w-full rounded"
+              multiple
+              {...register("team", { required: "At least one team member is required!" })}
             >
-              <option value="todo">To Do</option>
-              <option value="in progress">In Progress</option>
-              <option value="completed">Completed</option>
+              {taskData?.task?.team?.map((member) => (
+                <option key={member._id} value={member._id}>
+                  {member.name} ({member.title})
+                </option>
+              ))}
             </select>
-            {errors.stage && <span className="text-red-600">{errors.stage.message}</span>}
+            {errors.team && <span className="text-red-600">{errors.team.message}</span>}
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Task Items
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Task Objectives</label>
             <div className="flex flex-col gap-2">
               {fields.map((field, index) => (
                 <div key={field.id} className="flex items-center gap-4">
                   <Textbox
-                    placeholder={`Item ${index + 1}`}
+                    placeholder={`Objective ${index + 1}`}
                     type="text"
                     name={`objectives[${index}].description`}
                     className="w-full"
@@ -151,7 +153,7 @@ const AddSubTask = ({ open, setOpen, id }) => {
           <Button
             type="submit"
             className="bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 sm:ml-3 sm:w-auto"
-            label="Add Task"
+            label="Add Subtask"
           />
           <Button
             type="button"

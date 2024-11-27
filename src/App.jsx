@@ -14,6 +14,7 @@ import Trash from "./pages/Trash";
 import Users from "./pages/Users";
 import Dashboard from "./pages/dashboard";
 import Register from "./pages/Register";
+import Rating from "./pages/Rating";
 import { setOpenSidebar } from "./redux/slices/authSlice";
 
 function Layout() {
@@ -107,6 +108,7 @@ function App() {
           <Route path='/team' element={<Users />} />
           <Route path='/trashed' element={<Trash />} />
           <Route path='/task/:id' element={<TaskDetails />} />
+          <Route path='/rating' element={<Rating />} />
         </Route>
 
         <Route path='/log-in' element={<Login />} />
