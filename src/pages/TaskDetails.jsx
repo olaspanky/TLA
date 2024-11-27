@@ -206,6 +206,48 @@ const TaskDetails = () => {
     }));
   };
 
+
+  const handleAcceptTaskAsCompleted = async (subTaskId) => {
+    // Find the specific subtask being updated
+    const subTaskToUpdate = localTaskData.subTasks.find(
+      (subTask) => subTask._id === subTaskId
+    );
+  
+    if (!subTaskToUpdate) {
+      toast.error("Subtask not found.");
+      return;
+    }
+  
+    try {
+      // Prepare the updated subtask data
+      const updatedSubtask = {
+        ...subTaskToUpdate,
+        stage: "completed",
+      };
+  
+      // Send the update request to the backend
+      await updateSubTask({
+        taskId: id,
+        subTaskId,
+        updateData: updatedSubtask,
+      }).unwrap();
+  
+      // Update the local state
+      setLocalTaskData((prevData) => ({
+        ...prevData,
+        subTasks: prevData.subTasks.map((subTask) =>
+          subTask._id === subTaskId ? updatedSubtask : subTask
+        ),
+      }));
+  
+      toast.success("Subtask marked as completed!");
+    } catch (error) {
+      console.error("Error updating subtask stage:", error);
+      toast.error("Failed to update subtask. Please try again.");
+    }
+  };
+  
+
   // Render loading
   if (isLoading) return <Loading />;
   return (
@@ -302,6 +344,8 @@ const TaskDetails = () => {
                                   </span>
                                 </p>
                               </div>
+
+                             
                               <p className="text-gray-700 font-medium">
                                 {subTask?.title}
                               </p>
@@ -327,9 +371,13 @@ const TaskDetails = () => {
     </button>
 
 
+
+
     
                             </div>
                           </div>
+
+                          
                           <button
                             onClick={() => toggleSubTask(subTask._id)}
                             className="text-blue-500 underline"
@@ -338,6 +386,21 @@ const TaskDetails = () => {
                             Task Items 1
                           </button>
                         </div>
+
+                        {completionPercentage >= 80 && (
+  <button
+    onClick={() => handleAcceptTaskAsCompleted(subTask._id)}
+    disabled={subTask.stage === "completed"} // Disable button if stage is "completed"
+    className={`py-1 px-3 rounded-md ${
+      subTask.stage === "completed"
+        ? "bg-gray-400 text-white cursor-not-allowed"
+        : "bg-green-500 text-white hover:bg-green-600"
+    }`}
+  >
+    {subTask.stage === "completed" ? "Completed" : "Accept Task as Completed"}
+  </button>
+)}
+
 
                        {/* Edit Subtask Modal */}
 {editingSubtask && (
@@ -387,7 +450,7 @@ const TaskDetails = () => {
       </div>
 
       {/* Tag Input */}
-      <div className="mb-4">
+      {/* <div className="mb-4">
   <label htmlFor="subtask-stage" className="block text-sm font-medium text-gray-700">
     Stage
   </label>
@@ -405,7 +468,7 @@ const TaskDetails = () => {
     <option value="in progress">In Progress</option>
     <option value="completed">Completed</option>
   </select>
-</div>
+</div> */}
 
       {/* Objective Inputs */}
       <div className="space-y-4 mb-4">
