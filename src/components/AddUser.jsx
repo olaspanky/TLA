@@ -93,6 +93,17 @@ if(userData?._id === user > _id){
             />
 
             <Textbox
+              placeholder='Department'
+              type='text'
+              name='dept'
+              label='Dept'
+              className='w-full rounded'
+              register={register("dept", {
+                required: "User department is required!",
+              })}
+              error={errors.dept ? errors.dept.message : ""}
+            />
+            <Textbox
               placeholder='Role'
               type='text'
               name='role'
@@ -103,6 +114,31 @@ if(userData?._id === user > _id){
               })}
               error={errors.role ? errors.role.message : ""}
             />
+            <div className="flex justify-between gap-3">
+            <Textbox
+              placeholder='securityQuestion'
+              type='text'
+              name='securityQuestion'
+              label='securityQuestion'
+              className='w-full rounded'
+              register={register("securityQuestion", {
+                required: " securityQuestion is required!",
+              })}
+              error={errors.securityQuestion ? errors.securityQuestion.message : ""}
+            />
+            <Textbox
+              placeholder='securityAnswer'
+              type='text'
+              name='securityAnswer'
+              label='securityAnswer'
+              className='w-full rounded'
+              register={register("securityAnswer", {
+                required: " securityAnswer is required!",
+              })}
+              error={errors.securityAnswer ? errors.securityAnswer.message : ""}
+            />
+            </div>
+           
           </div>
 
           {isLoading  ? (
