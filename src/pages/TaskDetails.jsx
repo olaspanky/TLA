@@ -18,7 +18,88 @@ import Modal from "../components/ModalWrapper";
 import ConfirmModal from "../components/ConfirmModal";
 import { useSelector } from "react-redux"; // or from your state management library
 
+
 const TABS = [{ title: "Activities/Timeline", icon: <FaTasks /> }];
+
+
+
+const TaskIcon = ({ className, size = 28 }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M22 5.18L10.59 16.6l-4.95-4.95-1.41 1.41L10.59 19 23.41 6.18z"/>
+  </svg>
+);
+
+const EditIcon = ({ className, size = 20 }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+  </svg>
+);
+
+const DeleteIcon = ({ className, size = 20 }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+  </svg>
+);
+
+const CommentIcon = ({ className, size = 20 }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+  </svg>
+);
+
+const ExpandMoreIcon = ({ className, size = 20 }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
+  </svg>
+);
+
+const ExpandLessIcon = ({ className, size = 20 }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/>
+  </svg>
+);
 
 const TaskDetails = () => {
   const { id } = useParams();
@@ -257,6 +338,19 @@ const TaskDetails = () => {
   });
 
   // Delete Subtask
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'; // Return 'N/A' if date is not provided
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch {
+      return 'Invalid Date';
+    }
+  };
  
 
 
@@ -325,74 +419,91 @@ const TaskDetails = () => {
                           isDisabled ? "opacity-50 cursor-not-allowed" : ""
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-indigo-100">
-                              <MdTaskAlt
-                                className="text-indigo-600"
-                                size={26}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <div className="flex gap-2 items-center">
-                                <span className="text-sm text-gray-500">
-                                  {new Date(subTask?.date).toDateString()}
-                                </span>
-                                <span className="px-3 py-1 text-sm rounded-full bg-indigo-100 text-indigo-700 font-semibold">
-                                  {subTask?.tag}
-                                </span>
-                                
-                                <p className="text-gray-500 font-semibold text-sm">
-                                  Objectives Completed:{" "}
-                                  <span className="text-indigo-600">
-                                    {completionPercentage}%
-                                  </span>
-                                </p>
-                                <p className="text-gray-500 font-semibold text-sm">
-                                  Due Date{" "}
-                                  <span className="text-indigo-600">
-                                    Due:{" "}
-                                    {new Date(
-                                      subTask.completionDate
-                                    ).toDateString()}
-                                  </span>
-                                </p>
-                              </div>
+                        <div className="bg-white shadow-md rounded-lg p-4 border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4 w-full">
+          {/* Task Icon */}
+          <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center">
+            <TaskIcon className="text-indigo-600" />
+          </div>
 
-                              <p className="text-gray-700 font-medium">
-                                {subTask?.title}
-                              </p>
-                              <button
-                                onClick={() => setEditingSubtask(subTask)}
-                                className="text-blue-500 underline"
-                              >
-                                Edit
-                              </button>
+          {/* Task Details */}
+          <div className="flex-grow space-y-2">
+            {/* Header with Date, Tag, and Progress */}
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-500">
+                {formatDate(subTask.date)}
+              </span>
+              
+              <span className="px-3 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700 font-medium">
+                {subTask.tag || 'No Tag'}
+              </span>
+              
+              <span className="text-sm text-gray-500">
+                Objectives: <span className="text-indigo-600 font-semibold">{completionPercentage}%</span>
+              </span>
+              
+              <span className="text-sm text-gray-500">
+                Due: <span className="text-red-500 font-semibold">
+                  {formatDate(subTask.completionDate)}
+                </span>
+              </span>
+            </div>
 
-                              <button
-                                onClick={() => openModal(subTask._id)}
-                                className="text-red-500 underline ml-2"
-                              >
-                                Delete
-                              </button>
+            {/* Task Title */}
+            <h3 className="text-gray-800 font-semibold text-base">
+              {subTask.title || 'Untitled Task'}
+            </h3>
 
-                              <button
-                                onClick={() => setActiveSubTaskId(subTask._id)} // Set active subtask ID when clicked
-                                className="text-blue-500 underline"
-                              >
-                                Add Comment
-                              </button>
-                            </div>
-                          </div>
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-3">
+              <button 
+                onClick={() => setEditingSubtask(subTask)}
+                className="text-blue-500 hover:text-blue-600 transition-colors flex items-center space-x-1 text-sm"
+              >
+                <EditIcon className="mr-1" />
+                Edit
+              </button>
 
-                          <button
-                            onClick={() => toggleSubTask(subTask._id)}
-                            className="text-blue-500 underline"
-                          >
-                            {expandedSubTask === subTask._id ? "Hide" : "Show"}{" "}
-                            Task Items 1
-                          </button>
-                        </div>
+              <button 
+                onClick={() => openModal(subTask._id)}
+                className="text-red-500 hover:text-red-600 transition-colors flex items-center space-x-1 text-sm"
+              >
+                <DeleteIcon className="mr-1" />
+                Delete
+              </button>
+
+              <button 
+                onClick={() => setActiveSubTaskId(subTask._id)}
+                className="text-green-500 hover:text-green-600 transition-colors flex items-center space-x-1 text-sm"
+              >
+                <CommentIcon className="mr-1" />
+                Add Comment
+              </button>
+            </div>
+          </div>
+
+          {/* Expand/Collapse Button */}
+          <button
+            onClick={() => toggleSubTask(subTask._id)}
+            className="text-gray-500 hover:text-indigo-600 transition-colors flex items-center space-x-1 text-sm"
+          >
+            {expandedSubTask === subTask._id ? (
+              <>
+                <ExpandLessIcon />
+                <span>Hide Tasks</span>
+              </>
+            ) : (
+              <>
+                <ExpandMoreIcon />
+                <span>Show Tasks</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+
 
                         {completionPercentage >= 80 && (
   <button
