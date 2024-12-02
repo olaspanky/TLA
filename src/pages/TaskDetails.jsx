@@ -16,6 +16,7 @@ import Loading from "../components/Loader";
 import Button from "../components/Button";
 import Modal from "../components/ModalWrapper";
 import ConfirmModal from "../components/ConfirmModal";
+import { useSelector } from "react-redux"; // or from your state management library
 
 const TABS = [{ title: "Activities/Timeline", icon: <FaTasks /> }];
 
@@ -34,9 +35,10 @@ const TaskDetails = () => {
   const [reaction, setReaction] = useState("thumbs_up"); // Default reaction
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [commentsVisible, setCommentsVisible] = useState(null); // Track visibility of comments for each subtask
-  const [updateSubTaskItem, { isLoading: isUpdating }] = useUpdateSubTaskItemMutation();
+  const { user } = useSelector((state) => state.auth); // Get current user data from Redux
 
-
+  const [updateSubTaskItem, { isLoading: isUpdating }] =
+    useUpdateSubTaskItemMutation();
 
   const [updateSubTask, { isLoading: isUpdatingSubTask }] =
     useUpdateSubTaskMutation();
@@ -62,7 +64,7 @@ const TaskDetails = () => {
     try {
       const commentData = {
         text: newComment,
-        author: "User123", // Replace with actual user data
+        author: user?.name || "Unknown User",  // Dynamically pass the current user's name
         rating,
         reaction,
       };
@@ -198,40 +200,39 @@ const TaskDetails = () => {
   };
 
   const handleRemoveObjective = (objectiveId) => {
-    setEditingSubtask(prevSubtask => ({
+    setEditingSubtask((prevSubtask) => ({
       ...prevSubtask,
       objectives: prevSubtask.objectives.filter(
-        objective => objective._id !== objectiveId
+        (objective) => objective._id !== objectiveId
       ),
     }));
   };
-
 
   const handleAcceptTaskAsCompleted = async (subTaskId) => {
     // Find the specific subtask being updated
     const subTaskToUpdate = localTaskData.subTasks.find(
       (subTask) => subTask._id === subTaskId
     );
-  
+
     if (!subTaskToUpdate) {
       toast.error("Subtask not found.");
       return;
     }
-  
+
     try {
       // Prepare the updated subtask data
       const updatedSubtask = {
         ...subTaskToUpdate,
         stage: "completed",
       };
-  
+
       // Send the update request to the backend
       await updateSubTask({
         taskId: id,
         subTaskId,
         updateData: updatedSubtask,
       }).unwrap();
-  
+
       // Update the local state
       setLocalTaskData((prevData) => ({
         ...prevData,
@@ -239,14 +240,26 @@ const TaskDetails = () => {
           subTask._id === subTaskId ? updatedSubtask : subTask
         ),
       }));
-  
+
       toast.success("Subtask marked as completed!");
     } catch (error) {
       console.error("Error updating subtask stage:", error);
       toast.error("Failed to update subtask. Please try again.");
     }
   };
-  
+
+  const filteredSubTasks = localTaskData?.subTasks?.filter((subTask) => {
+    if (user?.role === "admin") {
+      return true; // Admin can see all tasks
+    }
+    // Regular user can only see tasks assigned to them
+    return subTask.team?.includes(user._id);
+  });
+
+  // Delete Subtask
+ 
+
+
 
   // Render loading
   if (isLoading) return <Loading />;
@@ -265,7 +278,7 @@ const TaskDetails = () => {
                   SUB-TASKS{" "}
                 </p>
                 <div className="space-y-8">
-                  {localTaskData?.subTasks?.map((subTask, index) => {
+                  {filteredSubTasks?.map((subTask, index) => {
                     const totalObjectives = subTask?.objectives?.length || 0;
                     const completedObjectives = subTask?.objectives?.filter(
                       (obj) => obj.status === "completed"
@@ -328,6 +341,7 @@ const TaskDetails = () => {
                                 <span className="px-3 py-1 text-sm rounded-full bg-indigo-100 text-indigo-700 font-semibold">
                                   {subTask?.tag}
                                 </span>
+                                
                                 <p className="text-gray-500 font-semibold text-sm">
                                   Objectives Completed:{" "}
                                   <span className="text-indigo-600">
@@ -345,7 +359,6 @@ const TaskDetails = () => {
                                 </p>
                               </div>
 
-                             
                               <p className="text-gray-700 font-medium">
                                 {subTask?.title}
                               </p>
@@ -363,21 +376,15 @@ const TaskDetails = () => {
                                 Delete
                               </button>
 
-                             <button
-      onClick={() => setActiveSubTaskId(subTask._id)} // Set active subtask ID when clicked
-      className="text-blue-500 underline"
-    >
-      Add Comment
-    </button>
-
-
-
-
-    
+                              <button
+                                onClick={() => setActiveSubTaskId(subTask._id)} // Set active subtask ID when clicked
+                                className="text-blue-500 underline"
+                              >
+                                Add Comment
+                              </button>
                             </div>
                           </div>
 
-                          
                           <button
                             onClick={() => toggleSubTask(subTask._id)}
                             className="text-blue-500 underline"
@@ -389,7 +396,13 @@ const TaskDetails = () => {
 
                         {completionPercentage >= 80 && (
   <button
-    onClick={() => handleAcceptTaskAsCompleted(subTask._id)}
+    onClick={() => {
+      if (user?.role === "admin") {
+        handleAcceptTaskAsCompleted(subTask._id);
+      } else {
+        toast.info("Task is marked for review. Please wait for the admin.");
+      }
+    }}
     disabled={subTask.stage === "completed"} // Disable button if stage is "completed"
     className={`py-1 px-3 rounded-md ${
       subTask.stage === "completed"
@@ -397,60 +410,72 @@ const TaskDetails = () => {
         : "bg-green-500 text-white hover:bg-green-600"
     }`}
   >
-    {subTask.stage === "completed" ? "Completed" : "Accept Task as Completed"}
+    {subTask.stage === "completed"
+      ? "Task Accepted, Completed"
+      : user?.role === "admin"
+      ? "Accept Task as Completed"
+      : "Task Marked for Review"}
   </button>
 )}
 
 
-                       {/* Edit Subtask Modal */}
-{editingSubtask && (
-  <Modal onClose={() => setEditingSubtask(null)} open={!!editingSubtask}>
-    <div className="relative">
-      {/* Close Button */}
-      <button
-        onClick={() => setEditingSubtask(null)}
-        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 focus:outline-none"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-6 h-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
+                        {/* Edit Subtask Modal */}
+                        {editingSubtask && (
+                          <Modal
+                            onClose={() => setEditingSubtask(null)}
+                            open={!!editingSubtask}
+                          >
+                            <div className="relative">
+                              {/* Close Button */}
+                              <button
+                                onClick={() => setEditingSubtask(null)}
+                                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="w-6 h-6"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
 
-      <h2 className="text-lg font-semibold mb-4">Edit Subtask</h2>
+                              <h2 className="text-lg font-semibold mb-4">
+                                Edit Subtask
+                              </h2>
 
-      {/* Title Input */}
-      <div className="mb-4">
-        <label htmlFor="subtask-title" className="block text-sm font-medium text-gray-700">
-          Title
-        </label>
-        <input
-          id="subtask-title"
-          type="text"
-          value={editingSubtask.title}
-          onChange={(e) => {
-            setEditingSubtask({
-              ...editingSubtask,
-              title: e.target.value,
-            });
-          }}
-          placeholder="Enter subtask title"
-          className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
-        />
-      </div>
+                              {/* Title Input */}
+                              <div className="mb-4">
+                                <label
+                                  htmlFor="subtask-title"
+                                  className="block text-sm font-medium text-gray-700"
+                                >
+                                  Title
+                                </label>
+                                <input
+                                  id="subtask-title"
+                                  type="text"
+                                  value={editingSubtask.title}
+                                  onChange={(e) => {
+                                    setEditingSubtask({
+                                      ...editingSubtask,
+                                      title: e.target.value,
+                                    });
+                                  }}
+                                  placeholder="Enter subtask title"
+                                  className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                              </div>
 
-      {/* Tag Input */}
-      {/* <div className="mb-4">
+                              {/* Tag Input */}
+                              {/* <div className="mb-4">
   <label htmlFor="subtask-stage" className="block text-sm font-medium text-gray-700">
     Stage
   </label>
@@ -470,62 +495,62 @@ const TaskDetails = () => {
   </select>
 </div> */}
 
-      {/* Objective Inputs */}
-      <div className="space-y-4 mb-4">
-        {editingSubtask.objectives.map((objective) => (
-          <div
-            key={objective._id}
-            className="flex items-center justify-between border rounded-md p-2 bg-gray-50"
-          >
-            <input
-              type="text"
-              value={objective.description}
-              onChange={(e) => {
-                const updatedObjectives = editingSubtask.objectives.map((obj) =>
-                  obj._id === objective._id
-                    ? { ...obj, description: e.target.value }
-                    : obj
-                );
-                setEditingSubtask({
-                  ...editingSubtask,
-                  objectives: updatedObjectives,
-                });
-              }}
-              placeholder="Objective Description"
-              className="flex-1 border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-            <button
-              onClick={() => handleRemoveObjective(objective._id)}
-              className="ml-2 bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600"
-            >
-              Remove
-            </button>
-          </div>
-        ))}
-      </div>
+                              {/* Objective Inputs */}
+                              <div className="space-y-4 mb-4">
+                                {editingSubtask.objectives.map((objective) => (
+                                  <div
+                                    key={objective._id}
+                                    className="flex items-center justify-between border rounded-md p-2 bg-gray-50"
+                                  >
+                                    <input
+                                      type="text"
+                                      value={objective.description}
+                                      onChange={(e) => {
+                                        const updatedObjectives =
+                                          editingSubtask.objectives.map((obj) =>
+                                            obj._id === objective._id
+                                              ? {
+                                                  ...obj,
+                                                  description: e.target.value,
+                                                }
+                                              : obj
+                                          );
+                                        setEditingSubtask({
+                                          ...editingSubtask,
+                                          objectives: updatedObjectives,
+                                        });
+                                      }}
+                                      placeholder="Objective Description"
+                                      className="flex-1 border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    />
+                                    <button
+                                      onClick={() =>
+                                        handleRemoveObjective(objective._id)
+                                      }
+                                      className="ml-2 bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600"
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
 
-      <div className="flex justify-end">
-        <button
-          onClick={handleUpdateSubtask}
-          disabled={isUpdating}
-          className={`bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 ${
-            isUpdating ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        >
-          {isUpdating ? "Updating..." : "Save Changes"}
-        </button>
-      </div>
-    </div>
-  </Modal>
-)}
-
-
-
-                      
-
-                       
-
-                      
+                              <div className="flex justify-end">
+                                <button
+                                  onClick={handleUpdateSubtask}
+                                  disabled={isUpdating}
+                                  className={`bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 ${
+                                    isUpdating
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }`}
+                                >
+                                  {isUpdating ? "Updating..." : "Save Changes"}
+                                </button>
+                              </div>
+                            </div>
+                          </Modal>
+                        )}
 
                         {expandedSubTask === subTask._id && (
                           <div>
@@ -601,73 +626,82 @@ const TaskDetails = () => {
               </div>
             </div>
 
-{/* comment box */}
-<div className="w-full md:w-1/2 space-y-8">
+            {/* comment box */}
+            <div className="w-full md:w-1/2 space-y-8">
+              {/* Only show comment section when a subtask is selected */}
+              {activeSubTaskId && (
+                <>
+                  <div className="p-4 border rounded-lg shadow-sm">
+                    <h2 className="font-semibold text-lg">Add Comment</h2>
 
-{/* Only show comment section when a subtask is selected */}
-{activeSubTaskId && (
-      <>
-        <div className="p-4 border rounded-lg shadow-sm">
-          <h2 className="font-semibold text-lg">Add Comment</h2>
+                    {/* Textarea for comment */}
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="w-full border rounded-md p-2 mt-2 resize-none h-32 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Write your comment here..."
+                    />
 
-          {/* Textarea for comment */}
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="w-full border rounded-md p-2 mt-2 resize-none h-32 focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="Write your comment here..."
-          />
+                    {/* Button to add comment */}
+                    <button
+                      onClick={handleAddComment}
+                      disabled={
+                        isAddingComment ||
+                        !activeSubTaskId ||
+                        !newComment.trim()
+                      }
+                      className={`mt-4 w-full p-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-opacity-50 ${
+                        isAddingComment ||
+                        !activeSubTaskId ||
+                        !newComment.trim()
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
+                    >
+                      {isAddingComment ? "Adding Comment..." : "Add Comment"}
+                    </button>
+                  </div>
 
-          {/* Button to add comment */}
-          <button
-            onClick={handleAddComment}
-            disabled={isAddingComment || !activeSubTaskId || !newComment.trim()}
-            className={`mt-4 w-full p-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-opacity-50 ${
-              isAddingComment || !activeSubTaskId || !newComment.trim()
-                ? "opacity-50 cursor-not-allowed"
-                : ""
-            }`}
-          >
-            {isAddingComment ? "Adding Comment..." : "Add Comment"}
-          </button>
-        </div>
-
-        {/* Display added comments for the active subtask */}
-        {localTaskData?.subTasks?.map((subTask, subTaskIndex) => {
-          return subTask._id === activeSubTaskId ? (
-            <div key={subTask._id} className="mt-4">
-              <h3 className="text-lg font-semibold">Comments for subtask {subTaskIndex + 1}:</h3>
-              {subTask?.comments?.length > 0 ? (
-                <div className="space-y-4">
-                  {subTask.comments.map((comment, index) => (
-                    <div key={index} className="p-4 border rounded-lg shadow-sm bg-gray-50">
-                      <p className="text-sm text-gray-700">
-                        {index + 1}. {comment.text}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                        <span>{comment.author}</span>
-                        <span>•</span>
-                        <span>{new Date(comment.timestamp).toLocaleString()}</span>
+                  {/* Display added comments for the active subtask */}
+                  {localTaskData?.subTasks?.map((subTask, subTaskIndex) => {
+                    return subTask._id === activeSubTaskId ? (
+                      <div key={subTask._id} className="mt-4">
+                        <h3 className="text-lg font-semibold">
+                          Comments for subtask {subTaskIndex + 1}:
+                        </h3>
+                        {subTask?.comments?.length > 0 ? (
+                          <div className="space-y-4">
+                            {subTask.comments.map((comment, index) => (
+                              <div
+                                key={index}
+                                className="p-4 border rounded-lg shadow-sm bg-gray-50"
+                              >
+                                <p className="text-sm text-gray-700">
+                                  {index + 1}. {comment.text}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                                  <span>{comment.author}</span>
+                                  <span>•</span>
+                                  <span>
+                                    {new Date(
+                                      comment.timestamp
+                                    ).toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No comments yet.
+                          </p>
+                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No comments yet.</p>
+                    ) : null;
+                  })}
+                </>
               )}
             </div>
-          ) : null;
-        })}
-      </>
-    )}
-
-
-</div>
-
-
-
-
-
           </div>
         )}
       </Tabs>

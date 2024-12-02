@@ -5,6 +5,9 @@ import Textbox from "../Textbox";
 import Button from "../Button";
 import { useCreateSubTaskMutation, useGetSingleTaskQuery } from "../../redux/slices/api/taskApiSlice";
 import { toast } from "sonner";
+
+
+
 const AddSubTask = ({ open, setOpen, id }) => {
   const {
     register,
@@ -13,11 +16,11 @@ const AddSubTask = ({ open, setOpen, id }) => {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      objectives: [{ description: "" }], // Start with one objective
-      date: new Date().toISOString().split("T")[0], // Default to today's date
-      startDate: "", // Default start date
-      completionDate: "", // Default completion date
-      team: [], // Default empty team
+      objectives: [{ description: "" }],
+      date: new Date().toISOString().split("T")[0],
+      startDate: "",
+      completionDate: "",
+      teamMember: "", // Single team member field
     },
   });
 
@@ -41,6 +44,7 @@ const AddSubTask = ({ open, setOpen, id }) => {
     const taskDataToSend = {
       ...data,
       tag: nextTag,
+      teamMember: data.teamMember, // Only send the selected team member
     };
 
     try {
@@ -55,6 +59,7 @@ const AddSubTask = ({ open, setOpen, id }) => {
       toast.error(err?.data?.message || "Failed to add subtask");
     }
   };
+
 
   return (
     <ModalWrapper open={open} setOpen={setOpen}>
@@ -96,12 +101,11 @@ const AddSubTask = ({ open, setOpen, id }) => {
 
           {/* Team Selection */}
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700">Assign Team Members</label>
+            <label className="block text-sm font-medium text-gray-700">Assign Team Member</label>
             <select
-              name="team"
+              name="teamMember"
               className="w-full rounded"
-              multiple
-              {...register("team", { required: "At least one team member is required!" })}
+              {...register("teamMember", { required: "At least one team member is required!" })}
             >
               {taskData?.task?.team?.map((member) => (
                 <option key={member._id} value={member._id}>
@@ -109,9 +113,10 @@ const AddSubTask = ({ open, setOpen, id }) => {
                 </option>
               ))}
             </select>
-            {errors.team && <span className="text-red-600">{errors.team.message}</span>}
+            {errors.teamMember && <span className="text-red-600">{errors.teamMember.message}</span>}
           </div>
 
+          {/* Objectives Fields */}
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700">Task Objectives</label>
             <div className="flex flex-col gap-2">
@@ -148,7 +153,6 @@ const AddSubTask = ({ open, setOpen, id }) => {
             </div>
           </div>
         </div>
-
         <div className="py-3 mt-4 flex sm:flex-row-reverse gap-4">
           <Button
             type="submit"
