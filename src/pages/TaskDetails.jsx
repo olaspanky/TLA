@@ -778,8 +778,8 @@ const TaskDetails = () => {
     <h3 className="text-lg font-semibold">Comments:</h3>
     {localTaskData?.subTasks?.map((subTask, subTaskIndex) => (
       <div key={subTask._id} className="space-y-4">
-        <h4 className="text-md font-medium">
-          Subtask {subTaskIndex + 1} Comments:
+        <h4 className="text-md font-medium text-green-500">
+          {subTask.title} Comments:
         </h4>
         {subTask?.comments?.length > 0 ? (
           subTask.comments.map((comment, index) => (
