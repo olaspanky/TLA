@@ -407,7 +407,7 @@ const TaskDetails = () => {
                             );
 
                       // Enable only if the previous subtask has >= 80% objectives completed
-                      if (previousCompletionPercentage >= 80) {
+                      if (previousCompletionPercentage >= 0) {
                         isDisabled = false;
                       }
                     }
@@ -429,6 +429,10 @@ const TaskDetails = () => {
 
           {/* Task Details */}
           <div className="flex-grow space-y-2">
+
+              <h3 className="text-gray-800 font-semibold text-base">
+              {subTask.title || 'Untitled Task'}
+            </h3>
             {/* Header with Date, Tag, and Progress */}
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-500">
@@ -451,9 +455,7 @@ const TaskDetails = () => {
             </div>
 
             {/* Task Title */}
-            <h3 className="text-gray-800 font-semibold text-base">
-              {subTask.title || 'Untitled Task'}
-            </h3>
+          
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-3">
@@ -473,13 +475,17 @@ const TaskDetails = () => {
                 Delete
               </button>
 
-              <button 
-                onClick={() => setActiveSubTaskId(subTask._id)}
-                className="text-green-500 hover:text-green-600 transition-colors flex items-center space-x-1 text-sm"
-              >
-                <CommentIcon className="mr-1" />
-                Add Comment
-              </button>
+              <button
+  onClick={() =>
+    setActiveSubTaskId((prevId) => (prevId === subTask._id ? null : subTask._id))
+  }
+  className="text-green-500 hover:text-green-600 transition-colors flex items-center space-x-1 text-sm"
+>
+  <CommentIcon className="mr-1" />
+  {activeSubTaskId === subTask._id ? "Cancel" : "Add Comment"}
+</button>
+`
+
             </div>
           </div>
 
@@ -739,80 +745,66 @@ const TaskDetails = () => {
 
             {/* comment box */}
             <div className="w-full md:w-1/2 space-y-8">
-              {/* Only show comment section when a subtask is selected */}
-              {activeSubTaskId && (
-                <>
-                  <div className="p-4 border rounded-lg shadow-sm">
-                    <h2 className="font-semibold text-lg">Add Comment</h2>
+  {/* Only show Add Comment section when activeSubTaskId is set */}
+  {activeSubTaskId && (
+    <div className="p-4 border rounded-lg shadow-sm">
+      <h2 className="font-semibold text-lg">Add Comment</h2>
 
-                    {/* Textarea for comment */}
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      className="w-full border rounded-md p-2 mt-2 resize-none h-32 focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="Write your comment here..."
-                    />
+      {/* Textarea for comment */}
+      <textarea
+        value={newComment}
+        onChange={(e) => setNewComment(e.target.value)}
+        className="w-full border rounded-md p-2 mt-2 resize-none h-32 focus:ring-indigo-500 focus:border-indigo-500"
+        placeholder="Write your comment here..."
+      />
 
-                    {/* Button to add comment */}
-                    <button
-                      onClick={handleAddComment}
-                      disabled={
-                        isAddingComment ||
-                        !activeSubTaskId ||
-                        !newComment.trim()
-                      }
-                      className={`mt-4 w-full p-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-opacity-50 ${
-                        isAddingComment ||
-                        !activeSubTaskId ||
-                        !newComment.trim()
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }`}
-                    >
-                      {isAddingComment ? "Adding Comment..." : "Add Comment"}
-                    </button>
-                  </div>
+      {/* Button to add comment */}
+      <button
+        onClick={handleAddComment}
+        disabled={isAddingComment || !newComment.trim()}
+        className={`mt-4 w-full p-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-opacity-50 ${
+          isAddingComment || !newComment.trim()
+            ? "opacity-50 cursor-not-allowed"
+            : ""
+        }`}
+      >
+        {isAddingComment ? "Adding Comment..." : "Add Comment"}
+      </button>
+    </div>
+  )}
 
-                  {/* Display added comments for the active subtask */}
-                  {localTaskData?.subTasks?.map((subTask, subTaskIndex) => {
-                    return subTask._id === activeSubTaskId ? (
-                      <div key={subTask._id} className="mt-4">
-                        <h3 className="text-lg font-semibold">
-                          Comments for subtask {subTaskIndex + 1}:
-                        </h3>
-                        {subTask?.comments?.length > 0 ? (
-                          <div className="space-y-4">
-                            {subTask.comments.map((comment, index) => (
-                              <div
-                                key={index}
-                                className="p-4 border rounded-lg shadow-sm bg-gray-50"
-                              >
-                                <p className="text-sm text-gray-700">
-                                  {index + 1}. {comment.text}
-                                </p>
-                                <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                                  <span>{comment.author}</span>
-                                  <span>•</span>
-                                  <span>
-                                    {new Date(
-                                      comment.timestamp
-                                    ).toLocaleString()}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">
-                            No comments yet.
-                          </p>
-                        )}
-                      </div>
-                    ) : null;
-                  })}
-                </>
-              )}
+  {/* Always show comments for all subtasks */}
+  <div className="mt-4">
+    <h3 className="text-lg font-semibold">Comments:</h3>
+    {localTaskData?.subTasks?.map((subTask, subTaskIndex) => (
+      <div key={subTask._id} className="space-y-4">
+        <h4 className="text-md font-medium">
+          Subtask {subTaskIndex + 1} Comments:
+        </h4>
+        {subTask?.comments?.length > 0 ? (
+          subTask.comments.map((comment, index) => (
+            <div
+              key={index}
+              className="p-4 border rounded-lg shadow-sm bg-gray-50"
+            >
+              <p className="text-sm text-gray-700">
+                {index + 1}. {comment.text}
+              </p>
+              <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                <span>{comment.author}</span>
+                <span>•</span>
+                <span>{new Date(comment.timestamp).toLocaleString()}</span>
+              </div>
             </div>
+          ))
+        ) : (
+          <p className="text-sm text-gray-500">No comments yet.</p>
+        )}
+      </div>
+    ))}
+  </div>
+</div>
+
           </div>
         )}
       </Tabs>
