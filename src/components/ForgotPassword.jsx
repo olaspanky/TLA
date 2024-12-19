@@ -129,6 +129,14 @@ const ForgotPassword = () => {
         try {
             const response = await forgotPassword({ email, newPassword }).unwrap();
             setMessage(response.message || "Password reset successful!");
+            
+            // Close the modal after success
+            if (response.success) {
+                setTimeout(() => {
+                    setIsForgotPasswordOpen(false);
+                }, 1000); // Optionally add a small delay to show the success message
+            }
+            
             setStep(1); // Reset form
         } catch (error) {
             setMessage(error?.data?.message || "Password reset failed.");
@@ -205,7 +213,7 @@ const ForgotPassword = () => {
                     </form>
                 )}
 
-                {step === 3 && (
+{step === 3 && (
                     <form onSubmit={handlePasswordReset} className="space-y-6">
                         <div>
                             <label

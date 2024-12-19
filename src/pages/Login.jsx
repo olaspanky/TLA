@@ -2,6 +2,7 @@ import React, { useEffect , useState} from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Textbox from "../components/Textbox";
+import Textbox2 from "../components/Textbox2";
 import Button from "../components/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { useLoginMutation } from "../redux/slices/api/authApiSlice";
@@ -86,7 +87,7 @@ Traffic Pulse           </span>
                 })}
                 error={errors.email ? errors.email.message : ""}
               />
-              <Textbox
+              <Textbox2
                 placeholder='your password'
                 type='password'
                 name='password'
@@ -126,12 +127,13 @@ Traffic Pulse           </span>
             >
                 &times; {/* Close Icon */}
             </button>
-            <div className=" w-full">
-                <ForgotPassword />
+            <div className="w-full">
+                <ForgotPassword setIsForgotPasswordOpen={setIsForgotPasswordOpen} />
             </div>
         </div>
     </div>
 )}
+
     </div>
   );
 };
