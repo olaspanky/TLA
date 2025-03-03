@@ -15,7 +15,7 @@ import {
 } from "firebase/storage";
 import { app } from "../../utils/firebase";
 import {
-  useCraeteTaskMutation,
+  useCreateTaskMutation,
   useUpdateTaskMutation,
 } from "../../redux/slices/api/taskApiSlice";
 import { toast } from "sonner";
@@ -48,7 +48,7 @@ const AddTask = ({ open, setOpen, task }) => {
   const [assets, setAssets] = useState([]);
   const [uploading, setUploading] = useState(false);
 
-  const [createTask, { isLoading }] = useCraeteTaskMutation();
+  const [createTask, { isLoading }] = useCreateTaskMutation();
   const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
   const URLS = task?.assets ? [...task.assets] : [];
 

@@ -1,10 +1,10 @@
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRegisterMutation } from "../redux/slices/api/authApiSlice";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import Select from 'react-select';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -13,12 +13,23 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const departments = [
+    { value: 'hr', label: 'Human Resources' },
+    { value: 'finance', label: 'Finance' },
+    { value: 'it', label: 'Information Technology' },
+    { value: 'marketing', label: 'Marketing' },
+    { value: 'sales', label: 'Sales' },
+  ];
+
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
+
   const onSubmit = async (data) => {
     const updatedData = {
       ...data,
-      isAdmin: data.role === "admin" || data.role === "superadmin",
+      isAdmin: data.role === "admin" || data.role === "superAdmin",
+      dept: selectedDepartments.map(dept => dept.value), // Send only the values of selected departments
     };
-  
+
     try {
       const result = await registerUser(updatedData).unwrap();
       toast.success("Registration successful");
@@ -162,22 +173,19 @@ const Register = () => {
               {errors.confirmPassword && <span className="text-red-600 text-sm">{errors.confirmPassword.message}</span>}
             </div>
 
-
-        
-
-            {/* Dept */}
+            {/* Department */}
             <div className="flex flex-col">
-              <label htmlFor="role" className="text-sm font-medium text-gray-700">Department</label>
-              <input
-                id="title"
-                type="text"
-                placeholder="Enter your Department"
-                {...register("dept", { required: "Department is required" })}
-                className={`border p-2 mt-1 rounded ${errors.title ? "border-red-600" : "border-gray-300"}`}
+              <label htmlFor="department" className="text-sm font-medium text-gray-700">Department</label>
+              <Select
+                id="department"
+                isMulti
+                options={departments}
+                value={selectedDepartments}
+                onChange={setSelectedDepartments}
+                className={`mt-1 ${errors.department ? "border-red-600" : ""}`}
               />
-              {errors.title && <span className="text-red-600 text-sm">{errors.title.message}</span>}
+              {errors.department && <span className="text-red-600 text-sm">{errors.department.message}</span>}
             </div>
-
 
             {/* Role */}
             <div className="flex flex-col">
@@ -232,4 +240,3 @@ const Register = () => {
 };
 
 export default Register;
-

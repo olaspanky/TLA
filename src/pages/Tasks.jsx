@@ -27,15 +27,18 @@ const TASK_TYPE = {
 
 const Tasks = () => {
   const params = useParams();
-
   const [selected, setSelected] = useState(0);
   const [open, setOpen] = useState(false);
-
   const status = params?.status || "";
 
-  const {data, isLoading} = useGetAllTaskQuery({
-    strQuery: status, isTrashed: "", search: ""
-  })
+  const { data, isLoading } = useGetAllTaskQuery({
+    strQuery: status,
+    isTrashed: "",
+    search: ""
+  });
+
+  // Add a fallback for when data is undefined
+  const tasksData = data?.tasks || [];
 
   return isLoading ? (
     <div className='py-10'>
@@ -45,7 +48,6 @@ const Tasks = () => {
     <div className='w-full'>
       <div className='flex items-center justify-between mb-4'>
         <Title title={status ? `${status} Tasks` : "Tasks"} />
-
         {!status && (
           <Button
             onClick={() => setOpen(true)}
@@ -60,19 +62,16 @@ const Tasks = () => {
         {!status && (
           <div className='w-full flex justify-between gap-4 md:gap-x-12 py-4'>
             <TaskTitle label='To Do' className={TASK_TYPE.todo} />
-            <TaskTitle
-              label='In Progress'
-              className={TASK_TYPE["in progress"]}
-            />
+            <TaskTitle label='In Progress' className={TASK_TYPE["in progress"]} />
             <TaskTitle label='completed' className={TASK_TYPE.completed} />
           </div>
         )}
 
         {selected !== 1 ? (
-          <BoardView tasks={data?.tasks} />
+          <BoardView tasks={tasksData} />
         ) : (
           <div className='w-full'>
-            <Table tasks={data?.tasks} />
+            <Table tasks={tasksData} />
           </div>
         )}
       </Tabs>
@@ -81,5 +80,6 @@ const Tasks = () => {
     </div>
   );
 };
+
 
 export default Tasks;

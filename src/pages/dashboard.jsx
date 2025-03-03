@@ -24,7 +24,6 @@ const TaskTable = ({ tasks }) => {
     low: <MdKeyboardArrowDown />,
   };
 
-  console.log("user is", user)
 
   const TableHeader = () => (
     <thead className='border-b border-gray-300 '>
