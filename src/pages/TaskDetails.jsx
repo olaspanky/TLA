@@ -49,6 +49,8 @@ const TaskDetails = () => {
     commentToDelete: null, // Track comment to delete
   });
 
+  console.log("user role is", user.role)
+
   const [updateSubTaskItem] = useUpdateSubTaskItemMutation();
   const [updateSubTask] = useUpdateSubTaskMutation();
   const [deleteSubTask] = useDeleteSubTaskMutation();
@@ -219,8 +221,8 @@ const TaskDetails = () => {
   };
 
   const filteredSubTasks = state.localTaskData?.subTasks?.filter(subTask =>
-    user?.role === "superAdmin" ? true : subTask.team?.includes(user?._id)
-  );
+    user?.role === "superadmin" ? true : subTask.team?.includes(user?._id)
+  ) || [];
 
   const navigate = useNavigate();
 
@@ -358,14 +360,13 @@ const SubTaskItem = ({ subTask, index, state, user, formatDate, handleStateUpdat
       </div>
 
       {completionPercentage >= 80 && (
-        <button
-          onClick={() => user?.role === "admin" ? handleSubTaskAction("complete", subTask._id) : toast.info("Task marked for review")}
-          disabled={subTask.stage === "completed"}
-          className={`py-1 px-3 rounded-md ${subTask.stage === "completed" ? "bg-gray-400 text-white cursor-not-allowed" : "bg-green-500 text-white hover:bg-green-600"}`}
-        >
-          {subTask.stage === "completed" ? "Task Accepted" : user?.role === "admin" ? "Accept Task" : "Under Review"}
-        </button>
-      )}
+       <button
+       onClick={() => (user?.role === "superadmin" || user?.role === "admin") ? handleSubTaskAction("complete", subTask._id) : toast.info("Task marked for review")}
+       disabled={subTask.stage === "completed"}
+       className={`py-1 px-3 rounded-md ${subTask.stage === "completed" ? "bg-gray-400 text-white cursor-not-allowed" : "bg-green-500 text-white hover:bg-green-600"}`}
+     >
+       {subTask.stage === "completed" ? "Task Accepted" : (user?.role === "superadmin" || user?.role === "admin") ? "Accept Task" : "Under Review"}
+     </button>     )}
 
       {state.editingSubtask?._id === subTask._id && (
         <EditSubTaskModal

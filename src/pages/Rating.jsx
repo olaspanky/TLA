@@ -4,41 +4,65 @@ import { useGetDashboardStatsQuery } from "../redux/slices/api/taskApiSlice";
 const UserPerformance = () => {
   const { data, isLoading, error } = useGetDashboardStatsQuery();
 
+  // Calculate task completion percentage for an individual based on task.team
   const calculateTaskCompletion = (userId) => {
-    if (!data || !Array.isArray(data.last10Task)) return 0;
+    if (!data?.last10Task || !Array.isArray(data.last10Task)) return 0;
 
     const userTasks = data.last10Task.filter(
       (task) =>
-        task.team &&
-        task.team.some((user) => user._id === userId) &&
-        !task.isTrashed
+        task.team?.some((member) => member._id === userId) && !task.isTrashed
     );
 
-    const completedTasks = userTasks.filter((task) => task.stage === "COMPLETED"); // Ensure case matches backend
+    console.log(`Task data for user ${userId}:`, {
+      totalTasks: userTasks.length,
+      tasks: userTasks.map((task) => ({
+        title: task.title,
+        stage: task.stage,
+        team: task.team.map((member) => member._id),
+      })),
+    });
+
+    if (userTasks.length === 0) return 0;
+
+    const completedTasks = userTasks.filter((task) => task.stage === "completed");
     const completionPercentage = (completedTasks.length / userTasks.length) * 100;
 
-    return isNaN(completionPercentage) ? 0 : completionPercentage.toFixed(2);
+    return completionPercentage.toFixed(2);
   };
 
+  // Calculate subtask completion percentage for an individual based on subtask.team
   const calculateSubtaskCompletion = (userId) => {
-    if (!data || !Array.isArray(data.last10Task)) return 0;
+    if (!data?.last10Task || !Array.isArray(data.last10Task)) return 0;
 
     let totalSubtasks = 0;
     let completedSubtasks = 0;
+    const subtaskDetails = [];
 
     data.last10Task.forEach((task) => {
-      if (!task.subTasks || !Array.isArray(task.subTasks)) return;
+      if (task.isTrashed) return;
 
-      task.subTasks.forEach((subtask) => {
-        const subtaskBelongsToUser = subtask.team && subtask.team.includes(userId);
-
-        if (subtaskBelongsToUser && !task.isTrashed) {
+      task.subTasks?.forEach((subtask) => {
+        if (subtask.team?.includes(userId)) {
           totalSubtasks++;
-          if (subtask.stage === "completed") {
-            completedSubtasks++;
-          }
+          const isCompleted = subtask.stage === "completed";
+          if (isCompleted) completedSubtasks++;
+
+          // Collect details for logging
+          subtaskDetails.push({
+            taskTitle: task.title,
+            subtaskTitle: subtask.title,
+            subtaskTeam: subtask.team || [],
+            stage: subtask.stage,
+            completed: isCompleted,
+          });
         }
       });
+    });
+
+    console.log(`Subtask data for user ${userId}:`, {
+      totalSubtasks,
+      completedSubtasks,
+      details: subtaskDetails,
     });
 
     if (totalSubtasks === 0) return 0;
@@ -47,9 +71,11 @@ const UserPerformance = () => {
     return percentage.toFixed(2);
   };
 
+  // Determine traffic light color based on percentage
   const getTrafficLightColor = (percentage) => {
-    if (percentage <= 30) return "bg-red-500";
-    if (percentage <= 69) return "bg-yellow-500";
+    const value = parseFloat(percentage);
+    if (value <= 30) return "bg-red-500";
+    if (value <= 69) return "bg-yellow-500";
     return "bg-green-500";
   };
 
@@ -60,9 +86,6 @@ const UserPerformance = () => {
   if (error) {
     return <div>Error loading data: {error.message}</div>;
   }
-
-  // Log data for debugging
-  console.log("Dashboard Data:", data);
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -85,47 +108,41 @@ const UserPerformance = () => {
       </div>
 
       <div className="overflow-x-auto">
-        {data?.users?.length > 0 ? (
-          <table className="w-full">
-            <thead className="bg-gray-100 border-b">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Completion (%)</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtask Completion (%)</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Traffic Light</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {data.users.map((user) => {
-                const taskCompletion = calculateTaskCompletion(user._id);
-                const subtaskCompletion = calculateSubtaskCompletion(user._id);
-                const trafficLightColor = getTrafficLightColor(subtaskCompletion);
+        <table className="w-full">
+          <thead className="bg-gray-100 border-b">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Completion (%)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtask Completion (%)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Traffic Light</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {data?.users?.map((user) => {
+              const taskCompletion = calculateTaskCompletion(user._id);
+              const subtaskCompletion = calculateSubtaskCompletion(user._id);
+              const trafficLightColor = getTrafficLightColor(subtaskCompletion);
 
-                return (
-                  <tr key={user._id} className="hover:bg-gray-50 transition-colors duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {user.name} {user.isAdmin && !user.isSuperAdmin ? "(Admin)" : user.isSuperAdmin ? "(SuperAdmin)" : ""}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">
-                      {taskCompletion}%
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-semibold">
-                      {subtaskCompletion}%
-                    </td>
-                    <td className="px-6 py-4">
-                      <div
-                        className={`h-5 w-5 rounded-full ${trafficLightColor} mx-auto`}
-                        title={`Subtask Completion: ${subtaskCompletion}%`}
-                      ></div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        ) : (
-          <div className="px-6 py-4 text-gray-500">No team members to display.</div>
-        )}
+              return (
+                <tr key={user._id} className="hover:bg-gray-50 transition-colors duration-200">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">
+                    {taskCompletion}%
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-semibold">
+                    {subtaskCompletion}%
+                  </td>
+                  <td className="px-6 py-4">
+                    <div
+                      className={`h-5 w-5 rounded-full ${trafficLightColor} mx-auto`}
+                      title={`Subtask Completion: ${subtaskCompletion}%`}
+                    ></div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
