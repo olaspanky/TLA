@@ -1,45 +1,48 @@
-import { apiSlice } from "../apiSlice"
+import { apiSlice } from "../apiSlice";
 
-const AUTH_URL = "/user"
+const AUTH_URL = "/user";
 
 export const authApiSlice = apiSlice.injectEndpoints({
-    endpoints: (builder)=> ({
-        login: builder.mutation({
-            query: (data)=> ({
-                url: `${AUTH_URL}/login`,
-                method: "POST",
-                body: data,
-                credentials: "include",
+  endpoints: (builder) => ({
+    login: builder.mutation({
+      query: (data) => ({
+        url: `${AUTH_URL}/login`,
+        method: "POST",
+        body: data,
+      }),
+    }),
+    register: builder.mutation({
+      query: (data) => ({
+        url: `${AUTH_URL}/register`,
+        method: "POST",
+        body: {
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          password: data.password,
+        },
+      }),
+      invalidatesTags: ["User"],
+    }),
+    logout: builder.mutation({
+      query: () => ({
+        url: `${AUTH_URL}/logout`,
+        method: "POST",
+      }),
+    }),
+    forgotPassword: builder.mutation({
+      query: (data) => ({
+        url: `${AUTH_URL}/forgot-password`,
+        method: "POST",
+        body: data,
+      }),
+    }),
+  }),
+});
 
-            })
-        }),
-        register: builder.mutation({
-            query: (data)=> ({
-                url: `${AUTH_URL}/register`,
-                method: "POST",
-                body: data,
-                credentials: "include",
-
-            })
-        }),
-        logout: builder.mutation({
-            query: (data)=> ({
-                url: `${AUTH_URL}/logout`,
-                method: "POST",
-                credentials: "include",
-
-            })
-        }),
-
-        forgotPassword: builder.mutation({
-            query: (data) => ({
-                url: `${AUTH_URL}/forgot-password`,
-                method: "POST",
-                body: data, // Include this if sending data in the body
-                credentials: "include",
-            }),
-        }),
-    })
-})
-
-export const { useLoginMutation, useRegisterMutation, useLogoutMutation, useForgotPasswordMutation }= authApiSlice
+export const {
+  useLoginMutation,
+  useRegisterMutation,
+  useLogoutMutation,
+  useForgotPasswordMutation,
+} = authApiSlice;

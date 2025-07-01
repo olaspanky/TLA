@@ -9,12 +9,21 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import TaskDetails from "./pages/TaskDetails";
-import Tasks from "./pages/Tasks";
+import Tasks from "./pages/Tasks2";
 import Trash from "./pages/Trash";
 import Users from "./pages/Users";
 import Dashboard from "./pages/dashboard";
+import Dashboard2 from "./pages/dashboard2";
+import Progress from "./pages/Progress";
+import Development from "./pages/Development";
 import Register from "./pages/Register";
 import Rating from "./pages/Rating";
+import Admin from "./pages/Admindash";
+import Admin2 from "./pages/Adminobj";
+import Admin3 from "./pages/AdminPT";
+import SAdmin1 from "./pages/SAdmin1";
+import SAdmin2 from "./pages/SAdmin2";
+import SAdmin3 from "./pages/Admindevelopment";
 import { setOpenSidebar } from "./redux/slices/authSlice";
 
 function Layout() {
@@ -24,16 +33,12 @@ function Layout() {
 
   return user ? (
     <div className='w-full h-screen flex flex-col md:flex-row'>
-      <div className='w-1/5 h-screen bg-white sticky top-0 hidden md:block'>
-        <Sidebar />
-      </div>
-
-      <MobileSidebar />
+    
 
       <div className='flex-1 overflow-y-auto'>
         <Navbar />
 
-        <div className='p-4 2xl:px-10'>
+        <div className='z-30  2xl:mt-[-100px] lg:mt-[-60px]  2xl:mx-72 mx-20 rounded-lg shadow-md'> 
           <Outlet />
         </div>
       </div>
@@ -100,7 +105,10 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index path='/' element={<Navigate to='/dashboard' />} />
-          <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/dashboard' element={<Dashboard2 />} />
+          <Route path='/dashboard2' element={<Dashboard />} />
+          <Route path='/progress' element={<Progress />} />
+          <Route path='/development' element={<Development />} />
           <Route path='/tasks' element={<Tasks />} />
           <Route path='/completed/:status' element={<Tasks />} />
           <Route path='/in-progress/:status' element={<Tasks />} />
@@ -109,6 +117,12 @@ function App() {
           <Route path='/trashed' element={<Trash />} />
           <Route path='/task/:id' element={<TaskDetails />} />
           <Route path='/rating' element={<Rating />} />
+          <Route path='/admin' element={<Admin />} />
+          <Route path='/admin2' element={<Admin2 />} />
+          <Route path='/admin3' element={<Admin3 />} />
+          <Route path='/sadmin1' element={<SAdmin1 />} />
+          <Route path='/sadmin2' element={<SAdmin2 />} />
+          <Route path='/sadmin3' element={<SAdmin3 />} />
         </Route>
 
         <Route path='/log-in' element={<Login />} />

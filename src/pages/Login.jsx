@@ -1,4 +1,5 @@
-import React, { useEffect , useState} from "react";
+// src/components/Login.jsx
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import Textbox from "../components/Textbox";
@@ -7,10 +8,14 @@ import Button from "../components/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { useLoginMutation } from "../redux/slices/api/authApiSlice";
 import { toast, ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css'; // Import the CSS for toast notifications
+import "react-toastify/dist/ReactToastify.css";
 import { setCredentials } from "../redux/slices/authSlice";
-import Loading from "../components/Loader"
+import Loading from "../components/Loader";
 import ForgotPassword from "../components/ForgotPassword";
+import { Target, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import tar from "../assets/target.png";
+import logo from "../../public/plogoo.png";
+
 const Login = () => {
   const { user } = useSelector((state) => state.auth);
   const {
@@ -20,120 +25,291 @@ const Login = () => {
   } = useForm();
 
   const navigate = useNavigate();
-  const dispatch = useDispatch()
-  const[login, {isLoading}] = useLoginMutation()
-  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false); // State to control the modal
-
+  const dispatch = useDispatch();
+  const [login, { isLoading }] = useLoginMutation();
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const submitHandler = async (data) => {
-    try{
+    try {
       const result = await login(data).unwrap();
-      toast.success('Login successful!');  // You can show success toast too
-      dispatch(setCredentials(result))
-      navigate("/")
-      console.log(result)
-    } catch (error){
-      console.log(error);
-      toast.error(error?.data?.message || error.message)
-
+      dispatch(
+        setCredentials({
+          user: result.data.user,
+          token: result.data.token,
+        })
+      );
+      toast.success("Login successful!");
+      console.log("Dispatched credentials:", {
+        user: result.data.user,
+        token: result.data.token,
+      });
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error(error?.data?.message || "Failed to log in");
     }
   };
-console.log("user is", user)
+
+  console.log(
+    "Current auth state:",
+    useSelector((state) => state.auth)
+  );
+
   useEffect(() => {
-    user && navigate("/dashboard");
-  }, [user]);
+    if (user) {
+      console.log("User exists, redirecting to dashboard:", user);
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   return (
-    <div className='w-full min-h-screen flex items-center justify-center flex-col lg:flex-row bg-[#f3f4f6]'>
-      <div className='w-full md:w-auto flex gap-0 md:gap-40 flex-col md:flex-row items-center justify-center'>
-        {/* left side */}
-        <div className='h-full w-full lg:w-2/3 flex flex-col items-center justify-center'>
-          <div className='w-full md:max-w-lg 2xl:max-w-3xl flex flex-col items-center justify-center gap-5 md:gap-y-10 2xl:-mt-20'>
-            <span className='flex gap-1 py-1 px-3 border rounded-full text-sm md:text-base bordergray-300 text-gray-600'>
-Traffic Pulse           </span>
-            <p className='flex flex-col gap-0 md:gap-4 text-4xl md:text-6xl 2xl:text-7xl font-black text-center text-blue-700'>
-              <span>Performance</span>
-              <span> Management System</span>
-            </p>
-
-            <div className='cell'>
-              <div className='circle rotate-in-up-left'></div>
+    <div className="w-full min-h-screen flex bg-gray-50">
+      <div className="w-full flex">
+        {/* Left Side - Hero Section */}
+        <div className="hidden lg:flex lg:w-1/2 bg-[#000A48] relative overflow-hidden">
+          <div className="absolute top-8 left-8 flex items-center space-x-2">
+            <div className=" flex justify-center items-center">
+                <img
+                  src={logo}
+                  alt="Target Illustration"
+                  className="w- h-auto"
+                />
+              </div>
+          </div>
+          <div className="flex flex-col justify-center items-center px-16 w-full relative">
+            <div className="mb-8">
+              <h1 className="text-white text-5xl font-bold leading-tight">
+                Keep an eye on
+                <br />
+                Your <span className="text-green-400">Objectives</span>
+              </h1>
+            </div>
+            <div className="relative flex justify-center items-center">
+              <img
+                src={tar}
+                alt="Target Illustration"
+                className="w-[500px] h-auto"
+              />
             </div>
           </div>
         </div>
 
-        {/* right side */}
-        <div className='w-full md:w-1/3 p-4 md:p-1 flex flex-col justify-center items-center'>
-          <form
-            onSubmit={handleSubmit(submitHandler)}
-            className='form-container w-full md:w-[400px] flex flex-col gap-y-8 bg-white px-10 pt-14 pb-14'
-          >
-            <div className=''>
-              <p className='text-blue-600 text-3xl font-bold text-center'>
-                Welcome back!
-              </p>
-             
+        {/* Right Side - Login Form */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+          <div className="w-full max-w-md">
+            <div className="lg:hidden flex items-center justify-center mb-8">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-2">
+                <Target className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-blue-600 font-bold text-xl">P3R</span>
             </div>
-
-            <div className='flex flex-col gap-y-5'>
-              <Textbox
-                placeholder='email@example.com'
-                type='email'
-                name='email'
-                label='Email Address'
-                className='w-full rounded-full'
-                register={register("email", {
-                  required: "Email Address is required!",
-                })}
-                error={errors.email ? errors.email.message : ""}
-              />
-              <Textbox2
-                placeholder='your password'
-                type='password'
-                name='password'
-                label='Password'
-                className='w-full rounded-full'
-                register={register("password", {
-                  required: "Password is required!",
-                })}
-                error={errors.password ? errors.password.message : ""}
-              />
-
-<span
-                className="text-sm text-gray-500 hover:text-blue-600 hover:underline cursor-pointer"
-                onClick={() => setIsForgotPasswordOpen(true)} // Open the modal
+            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  Sign in
+                </h2>
+                <p className="text-gray-600">
+                  Welcome back! Please sign in to continue
+                </p>
+              </div>
+              <form
+                onSubmit={handleSubmit(submitHandler)}
+                className="space-y-6"
               >
-                Forget Password?
-              </span>
-
-             { isLoading? <Loading/> : <Button
-                type='submit'
-                label='Submit'
-                className='w-full h-10 bg-blue-700 text-white rounded-full'
-              />}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="email"
+                      placeholder="john.doe@company.com"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      {...register("email", {
+                        required: "Email Address is required!",
+                      })}
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      {...register("password", {
+                        required: "Password is required!",
+                      })}
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <input
+                      id="remember-me"
+                      name="remember-me"
+                      type="checkbox"
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor="remember-me"
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      Keep me signed in
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    onClick={() => setIsForgotPasswordOpen(true)}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                {isLoading ? (
+                  <div className="w-full py-3 flex justify-center">
+                    <Loading />
+                  </div>
+                ) : (
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02]"
+                  >
+                    Sign in
+                  </button>
+                )}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path
+                        fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      />
+                    </svg>
+                    <span className="ml-2">Google</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full inline-flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                    </svg>
+                    <span className="ml-2">Twitter</span>
+                  </button>
+                </div>
+              </form>
+              <p className="mt-8 text-center text-sm text-gray-600">
+                Don't have an account?{" "}
+                <button className="font-medium text-blue-600 hover:text-blue-800">
+                  Sign up for free
+                </button>
+              </p>
             </div>
-          </form>
-          <ToastContainer /> 
+          </div>
         </div>
       </div>
-
-      {/* Forgot Password Modal */}
       {isForgotPasswordOpen && (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div className="modal-content flex justify-center items-center w-full max-w-md bg-white rounded-lg shadow-md relative h-[500px] overflow-hidden">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+          <div className="modal-content flex justify-center items-center w-full max-w-md bg-white rounded-2xl shadow-2xl relative overflow-hidden">
             <button
-                className="absolute top-3 right-3 text-gray-700 hover:text-gray-900 z-10"
-                onClick={() => setIsForgotPasswordOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200"
+              onClick={() => setIsForgotPasswordOpen(false)}
             >
-                &times; {/* Close Icon */}
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
             </button>
-            <div className="w-full">
-                <ForgotPassword setIsForgotPasswordOpen={setIsForgotPasswordOpen} />
+            <div className="w-full p-6">
+              <ForgotPassword
+                setIsForgotPasswordOpen={setIsForgotPasswordOpen}
+              />
             </div>
+          </div>
         </div>
-    </div>
-)}
-
+      )}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };
