@@ -85,7 +85,7 @@ const AddObjectivesForm = () => {
           {/* Objective Title */}
           <div>
             <label className="block text-base font-medium text-gray-900 mb-4">
-              Objective Title
+             Lead Objective Title
             </label>
             <div className="relative">
               <textarea
@@ -105,7 +105,7 @@ const AddObjectivesForm = () => {
           {/* Objective Description */}
           <div>
             <label className="block text-base font-medium text-gray-900 mb-4">
-              Objective Description
+              Lead Objective Description
             </label>
             <div className="relative">
               <textarea
@@ -128,7 +128,7 @@ const AddObjectivesForm = () => {
           {/* Sub-Objectives */}
           <div>
             <label className="block text-base font-medium text-gray-900 mb-4">
-              Sub-Objectives
+              Lag-Objectives
             </label>
             {fields.map((field, index) => (
               <div key={field.id} className="border border-gray-200 rounded-lg p-4 mb-4">
@@ -136,7 +136,7 @@ const AddObjectivesForm = () => {
                   {/* Sub-Objective Title */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Sub-Objective Title
+                      Lag-Objective Title
                     </label>
                     <input
                       type="text"
@@ -156,7 +156,7 @@ const AddObjectivesForm = () => {
                   {/* Sub-Objective Description */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Sub-Objective Description (Optional)
+                      Lag-Objective Description (Optional)
                     </label>
                     <textarea
                       placeholder="Enter sub-objective description (e.g., Create React Native UI components)"

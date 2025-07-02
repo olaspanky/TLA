@@ -352,7 +352,8 @@ const Dashboard = () => {
                 <div key={objective._id} className="p-6">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center">
-                      <h3 className="text-base font-medium text-gray-900">{objective.title}</h3>
+<h3 className="text-base font-medium text-gray-900">{objective.title.substring(0, 50)}...</h3>
+
                       <span
                         className={`ml-3 px-2 py-1 text-xs font-medium rounded-full ${
                           objective.status === 'pending'
@@ -389,6 +390,8 @@ const Dashboard = () => {
                         </div>
                       )}
                     </div>
+                                      <p className="text-xs text-gray-600 mb-4">{objective.assignedTo.name}</p>
+
                   </div>
 
                   <p className="text-sm text-gray-600 mb-4">{objective.description}</p>
