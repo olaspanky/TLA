@@ -8,8 +8,9 @@ import {
   useUpdateObjectiveMutation,
   useAcceptObjectiveMutation,
   useDeclineObjectiveMutation,
-  useUpdateObjectiveProgressMutation // New mutation
+  useUpdateObjectiveProgressMutation
 } from '../redux/slices/api/objectiveApiSlice';
+import { useGetUserRatingQuery } from '../redux/slices/api/analyticsApiSlice';
 import Guage from '../components/GaugeChart';
 import { toast } from 'sonner';
 
@@ -19,6 +20,7 @@ const Dashboard = () => {
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [selectedObjectiveId, setSelectedObjectiveId] = useState(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isDepartmentWarningModalOpen, setIsDepartmentWarningModalOpen] = useState(false);
   const [updateFormData, setUpdateFormData] = useState({
     title: '',
     description: '',
@@ -28,7 +30,7 @@ const Dashboard = () => {
     subObjectives: [],
   });
   const [openCommentDropdowns, setOpenCommentDropdowns] = useState({});
-  const [openProgressDropdowns, setOpenProgressDropdowns] = useState({}); // New state for progress dropdowns
+  const [openProgressDropdowns, setOpenProgressDropdowns] = useState({});
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
@@ -38,14 +40,22 @@ const Dashboard = () => {
   const [updateObjective, { isLoading: isUpdating }] = useUpdateObjectiveMutation();
   const [acceptObjective, { isLoading: isAccepting }] = useAcceptObjectiveMutation();
   const [declineObjective, { isLoading: isDeclining }] = useDeclineObjectiveMutation();
-  const [updateObjectiveProgress, { isLoading: isUpdatingProgress }] = useUpdateObjectiveProgressMutation(); // New mutation hook
+  const [updateObjectiveProgress, { isLoading: isUpdatingProgress }] = useUpdateObjectiveProgressMutation();
 
-  // Demo data for stats
-  const performanceScore = 4.2;
+  // Fetch user rating
+  const { 
+    data: userRatingData, 
+    isLoading: isRatingLoading, 
+    isError: isRatingError, 
+    error: ratingError 
+  } = useGetUserRatingQuery(user?.id);
+
+  // Demo data for stats (replacing performanceScore with userRatingData.rating)
+  const performanceScore = userRatingData ? (userRatingData.rating / 20).toFixed(1) : 0; // Convert 0-100 to 0-5 scale
+  const gaugeValue = userRatingData ? userRatingData.rating : 0; // Use raw rating (0-100) for gauge
   const goalCompletion = 85;
   const skillGrowth = 7;
   const feedbackScore = 4.7;
-  const gaugeValue = 75;
 
   const tabs = ['Home', 'Objectives', 'Progress Tracking', 'Development plan'];
 
@@ -57,14 +67,32 @@ const Dashboard = () => {
     }
   }, [isError, error]);
 
+  // Handle error toast for rating fetch
+  React.useEffect(() => {
+    if (isRatingError) {
+      const errorMessage = ratingError?.data?.message || 'Failed to load performance rating';
+      toast.error(errorMessage);
+    }
+  }, [isRatingError, ratingError]);
+
   // Debug objectives data
   React.useEffect(() => {
     console.log('Objectives data:', objectives);
-  }, [objectives]);
+    console.log('User rating data:', userRatingData);
+  }, [objectives, userRatingData]);
 
   // Handle Add Objective button
   const handleAddObjective = () => {
-    navigate('/add-objective');
+    if (!user?.department) {
+      setIsDepartmentWarningModalOpen(true);
+      return;
+    }
+    navigate('/objective');
+  };
+
+  // Close department warning modal
+  const handleCloseDepartmentWarningModal = () => {
+    setIsDepartmentWarningModalOpen(false);
   };
 
   // Handle comment input change
@@ -253,10 +281,16 @@ const Dashboard = () => {
               <p className="text-sm text-gray-500 mb-4">
                 Based on your goals, feedback, and peer recognition
               </p>
-              <div className="flex items-baseline space-x-2">
-                <span className="text-4xl font-bold text-gray-900">{performanceScore}</span>
-                <span className="text-sm text-gray-500">/5.0 (Exceeds Expectations)</span>
-              </div>
+              {isRatingLoading ? (
+                <p className="text-sm text-gray-600">Loading performance score...</p>
+              ) : isRatingError ? (
+                <p className="text-sm text-red-600">Error loading performance score</p>
+              ) : (
+                <div className="flex items-baseline space-x-2">
+                  <span className="text-4xl font-bold text-gray-900">{performanceScore}</span>
+                  <span className="text-sm text-gray-500">/5.0 (Exceeds Expectations)</span>
+                </div>
+              )}
             </div>
             <div className="flex-shrink-0 p-4">
               <Guage value={gaugeValue} />
@@ -464,6 +498,7 @@ const Dashboard = () => {
         </div>
       </main>
 
+      {/* Comment Modal */}
       {isCommentModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
@@ -509,6 +544,7 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Update Modal */}
       {isUpdateModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
@@ -596,6 +632,34 @@ const Dashboard = () => {
                 }`}
               >
                 {isUpdating ? 'Updating...' : 'Update Objective'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Department Warning Modal */}
+      {isDepartmentWarningModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">No Department Assigned</h3>
+              <button
+                onClick={handleCloseDepartmentWarningModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              You are yet to be assigned a department. Please contact your administrator to get assigned to a department before adding objectives.
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={handleCloseDepartmentWarningModal}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>

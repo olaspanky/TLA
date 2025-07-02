@@ -30,7 +30,6 @@ const staffLinks = [
 
 const adminLinks = [
   ...staffLinks,
-  { label: "Admin", link: "admin", icon: <MdTaskAlt /> },
   { label: "Team objectives", link: "admin2", icon: <FaUsers /> },
 ];
 
@@ -40,6 +39,8 @@ const superAdminLinks = [
   { label: "User Management", link: "sadmin1", icon: <MdTaskAlt /> },
   { label: "Progress Tracking", link: "progress", icon: <MdOutlinePendingActions /> },
   { label: "Development plan", link: "sadmin3", icon: <MdTaskAlt /> },
+      { label: "Admin", link: "admin", icon: <MdTaskAlt /> },
+
 ];
 
 const Topbar = () => {
@@ -51,6 +52,8 @@ const Topbar = () => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [showNotificationsPanel, setShowNotificationsPanel] = useState(false);
   const notificationsPanelRef = useRef(null);
+
+  console.log("user is", user)
 
   // Notification API hooks
   const { 
@@ -112,7 +115,7 @@ const Topbar = () => {
   const getFilteredLinks = () => {
     if (!user) return staffLinks;
     if (user.role === "super_admin") return superAdminLinks;
-    if (user.role === "admin") return adminLinks;
+    if (user.role === "admin" || "manager") return adminLinks;
     return staffLinks;
   };
 
@@ -130,7 +133,7 @@ const Topbar = () => {
   );
 
   return (
-    <div className="w-full h-[30vh] bg-[#000A48] flex flex-col gap-12 p-5 2xl:px-72 px-20 ">
+    <div className="w-full h-[40vh] bg-[#000A48] flex flex-col gap-12 p-5 2xl:px-72 px-20 ">
       {/* Top Section: Logo and Search */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -192,10 +195,33 @@ const Topbar = () => {
 
       {/* Greeting and Navigation */}
       <div className="flex justify-between items-center mt-4">
-        <div>
-          <h1 className="text-white text-2xl">Hi, {user?.name || "Gbolade"}</h1>
-          <p className="text-gray-400 text-sm">Track Your Objectives Progress</p>
-        </div>
+       <div className="relative overflow-hidden bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 p-4 rounded-xl shadow-lg border border-slate-700/50">
+  {/* Background decoration */}
+  <div className="absolute inset-0 "></div>
+  <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl"></div>
+  
+  {/* Content */}
+  <div className="relative z-10 space-y-2">
+    {/* Welcome greeting */}
+    <div className="flex items-center gap-2">
+      <div className="w-1.5 h-1.5 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse"></div>
+      <h1 className="text-lg font-bold bg-gradient-to-r from-white to-slate-200 bg-clip-text text-transparent">
+        Hi, {user?.name || "Gbolade"}
+      </h1>
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-200 border border-blue-500/30">
+        {user?.role || "Team Member"}
+      </span>
+    </div>
+    
+    {/* Department and description */}
+    <div className="ml-4 space-y-1">
+      {user?.department?.name && (
+        <p className="text-slate-400 text-xs font-medium">{user.department.name || "Not assigned"}</p>
+      )}
+      <p className="text-slate-300 text-sm">Track Your Objectives Progress</p>
+    </div>
+  </div>
+</div>
         <div className="flex gap-4">
           {getFilteredLinks().map((link) => (
             <NavLink el={link} key={link.link} />

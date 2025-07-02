@@ -6,15 +6,21 @@ import {
   Loader2,
   AlertCircle,
   Edit2,
+  User,
+  X,
 } from 'lucide-react';
 import {
   useGetUsersQuery,
   useUpdateUserMutation,
+  useToggleUserStatusMutation,
+  useAssignUserDetailsMutation,
 } from '../../redux/slices/api/usersApiSlice';
 import { useGetDepartmentsQuery } from '../../redux/slices/api/departmentApiSlice';
+import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
 
 const AdminUsers = () => {
+  const { user: currentUser } = useSelector((state) => state.auth);
   const {
     data: usersData,
     isLoading: isUsersLoading,
@@ -22,13 +28,17 @@ const AdminUsers = () => {
     refetch,
   } = useGetUsersQuery();
   const { data: departmentsData, isLoading: isDepartmentsLoading } = useGetDepartmentsQuery();
-  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [toggleUserStatus, { isLoading: isTogglingStatus }] = useToggleUserStatusMutation();
+  const [assignUserDetails, { isLoading: isAssigningUser }] = useAssignUserDetailsMutation();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [editUserIds, setEditUserIds] = useState(new Set());
   const [editFormData, setEditFormData] = useState({});
   const [updatingUserId, setUpdatingUserId] = useState(null);
+  const [isSubObjectiveModalOpen, setIsSubObjectiveModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const usersPerPage = 10;
 
   // Role options (match backend roles)
@@ -40,6 +50,14 @@ const AdminUsers = () => {
     return departmentsData.map((dept) => ({ id: dept._id, name: dept.name }));
   }, [departmentsData]);
 
+  // User options for reportingTo (only admins and managers, excluding the user being edited)
+  const userOptions = useMemo(() => {
+    if (!usersData?.users) return [];
+    return usersData.users
+      .filter((u) => ['admin', 'manager'].includes(u.role))
+      .map((u) => ({ id: u._id, name: u.name, email: u.email, role: u.role }));
+  }, [usersData?.users]);
+
   // Handle sorting
   const handleSort = (key) => {
     setSortConfig((prev) => ({
@@ -48,40 +66,53 @@ const AdminUsers = () => {
     }));
   };
 
-
+  // Get department name
   const getDepartmentName = (departmentId) => {
-  if (!departmentId) return 'No department';
-  const dept = departmentOptions.find((d) => d.id === departmentId);
-  return dept ? dept.name : 'Unknown department';
-};
+    if (!departmentId) return 'No department';
+    const dept = departmentOptions.find((d) => d.id === departmentId);
+    return dept ? dept.name : 'Unknown department';
+  };
 
-// Update the sort function to use the helper
-const sortedAndFilteredUsers = useMemo(() => {
-  if (!usersData?.users) return [];
-
-  let filteredUsers = usersData.users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  return filteredUsers.sort((a, b) => {
-    const valueA =
-      sortConfig.key === 'department'
-        ? getDepartmentName(a.department)
-        : a[sortConfig.key];
-    const valueB =
-      sortConfig.key === 'department'
-        ? getDepartmentName(b.department)
-        : b[sortConfig.key];
-    if (valueA < valueB) return sortConfig.direction === 'asc' ? -1 : 1;
-    if (valueA > valueB) return sortConfig.direction === 'asc' ? 1 : -1;
-    return 0;
-  });
-}, [usersData?.users, searchTerm, sortConfig, departmentOptions]);
+  // Get reporting manager name
+  const getReportingToName = (reportingToId) => {
+    if (!reportingToId) return 'None';
+    const manager = userOptions.find((u) => u.id === reportingToId);
+    return manager ? `${manager.name} (${manager.email})` : 'Unknown';
+  };
 
   // Sort and filter users
-  
+  const sortedAndFilteredUsers = useMemo(() => {
+    if (!usersData?.users) return [];
+
+    let filteredUsers = usersData.users.filter(
+      (user) =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return filteredUsers.sort((a, b) => {
+      const valueA =
+        sortConfig.key === 'department'
+          ? getDepartmentName(a.department?._id || a.department)
+          : sortConfig.key === 'isActive'
+          ? a.isActive.toString()
+          : sortConfig.key === 'reportingTo'
+          ? getReportingToName(a.reportingTo?._id || a.reportingTo)
+          : a[sortConfig.key];
+      const valueB =
+        sortConfig.key === 'department'
+          ? getDepartmentName(b.department?._id || b.department)
+          : sortConfig.key === 'isActive'
+          ? b.isActive.toString()
+          : sortConfig.key === 'reportingTo'
+          ? getReportingToName(b.reportingTo?._id || b.reportingTo)
+          : b[sortConfig.key];
+      if (valueA < valueB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valueA > valueB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [usersData?.users, searchTerm, sortConfig, departmentOptions, userOptions]);
+
   // Pagination logic
   const totalPages = Math.ceil(sortedAndFilteredUsers.length / usersPerPage);
   const paginatedUsers = sortedAndFilteredUsers.slice(
@@ -96,13 +127,14 @@ const sortedAndFilteredUsers = useMemo(() => {
 
   // Handle edit click
   const handleEditClick = (user) => {
-    console.log('Editing user:', user); // Debug
+    console.log('Editing user:', user);
     setEditUserIds((prev) => new Set(prev).add(user._id));
     setEditFormData((prev) => ({
       ...prev,
       [user._id]: {
         role: user.role || '',
-        department: user.department?._id || '',
+        department: user.department?._id || user.department || '',
+        reportingTo: user.reportingTo?._id || user.reportingTo || '',
       },
     }));
   };
@@ -110,7 +142,7 @@ const sortedAndFilteredUsers = useMemo(() => {
   // Handle edit form change
   const handleEditFormChange = (userId, e) => {
     const { name, value } = e.target;
-    console.log('Form change:', { userId, name, value }); // Debug
+    console.log('Form change:', { userId, name, value });
     setEditFormData((prev) => ({
       ...prev,
       [userId]: {
@@ -120,7 +152,7 @@ const sortedAndFilteredUsers = useMemo(() => {
     }));
   };
 
-  // Handle update user
+  // Handle update user (using assignUserDetails)
   const handleUpdateUser = async (userId) => {
     const userData = editFormData[userId];
     if (!userData?.role) {
@@ -133,16 +165,34 @@ const sortedAndFilteredUsers = useMemo(() => {
       return;
     }
 
+    // Validate reportingTo
+    if (currentUser?.role === 'super_admin' && userData.reportingTo) {
+      const selectedUser = userOptions.find((u) => u.id === userData.reportingTo);
+      if (!selectedUser) {
+        toast.error('Selected reporting manager is invalid or does not exist');
+        return;
+      }
+      if (!['admin', 'manager'].includes(selectedUser.role)) {
+        toast.error('Reporting manager must have role "admin" or "manager"');
+        return;
+      }
+      if (userData.reportingTo === userId) {
+        toast.error('User cannot report to themselves');
+        return;
+      }
+    }
+
     setUpdatingUserId(userId);
     try {
       const payload = {
         id: userId,
         role: userData.role,
-        department: userData.department || null,
+        departmentId: userData.department || null,
+        reportingTo: currentUser?.role === 'super_admin' ? userData.reportingTo || null : undefined,
       };
-      console.log('Updating user with payload:', payload); // Debug
-      await updateUser(payload).unwrap();
-      toast.success('User updated successfully');
+      console.log('Payload for /user/{id}/assign:', payload); // Log the payload as requested
+      await assignUserDetails(payload).unwrap();
+      toast.success('User details assigned successfully');
       setEditUserIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(userId);
@@ -155,14 +205,17 @@ const sortedAndFilteredUsers = useMemo(() => {
       });
       refetch();
     } catch (err) {
-      console.error('Update error:', err); // Debug
+      console.error('Assign error:', err);
       const errorMessage =
+        err?.data?.error ||
         err?.data?.message ||
         (err.status === 400
-          ? 'Invalid input data'
+          ? 'Invalid input data. Please check the reporting manager selection.'
+          : err.status === 403
+          ? 'Only super_admin can assign reportingTo'
           : err.status === 404
-          ? 'User not found'
-          : 'Failed to update user');
+          ? 'User or department not found'
+          : 'Failed to assign user details');
       toast.error(errorMessage);
     } finally {
       setUpdatingUserId(null);
@@ -183,6 +236,49 @@ const sortedAndFilteredUsers = useMemo(() => {
     });
   };
 
+  // Handle toggle user status
+  const handleToggleUserStatus = async (userId) => {
+    if (!userId) {
+      toast.error('Invalid user ID');
+      return;
+    }
+
+    setUpdatingUserId(userId);
+    try {
+      const response = await toggleUserStatus(userId).unwrap();
+      toast.success(response.message || 'User status toggled successfully');
+      refetch();
+    } catch (err) {
+      console.error('Toggle status error:', err);
+      const errorMessage =
+        err?.data?.message ||
+        (err.status === 400
+          ? 'Bad request'
+          : err.status === 401
+          ? 'Unauthorized'
+          : err.status === 403
+          ? 'Forbidden'
+          : err.status === 404
+          ? 'User not found'
+          : 'Failed to toggle user status');
+      toast.error(errorMessage);
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
+  // Handle open sub-objective modal
+  const handleOpenSubObjectiveModal = (user) => {
+    setSelectedUser(user);
+    setIsSubObjectiveModalOpen(true);
+  };
+
+  // Handle close sub-objective modal
+  const handleCloseSubObjectiveModal = () => {
+    setIsSubObjectiveModalOpen(false);
+    setSelectedUser(null);
+  };
+
   // Render sort icon
   const renderSortIcon = (key) => {
     if (sortConfig.key !== key) return null;
@@ -192,8 +288,6 @@ const sortedAndFilteredUsers = useMemo(() => {
       <ChevronDown className="w-4 h-4 inline ml-1" />
     );
   };
-
-  console.log("user is", usersData)
 
   // Capitalize role for display
   const capitalizeRole = (role) => {
@@ -266,6 +360,18 @@ const sortedAndFilteredUsers = useMemo(() => {
               >
                 Department {renderSortIcon('department')}
               </th>
+              <th
+                onClick={() => handleSort('reportingTo')}
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
+              >
+                Reports To {renderSortIcon('reportingTo')}
+              </th>
+              <th
+                onClick={() => handleSort('isActive')}
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
+              >
+                Status {renderSortIcon('isActive')}
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -274,7 +380,7 @@ const sortedAndFilteredUsers = useMemo(() => {
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedUsers.length === 0 ? (
               <tr>
-                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
                   No users found.
                 </td>
               </tr>
@@ -307,54 +413,110 @@ const sortedAndFilteredUsers = useMemo(() => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-  {editUserIds.has(user._id) ? (
-    <select
-      name="department"
-      value={editFormData[user._id]?.department || ''}
-      onChange={(e) => handleEditFormChange(user._id, e)}
-      className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      disabled={isDepartmentsLoading || departmentOptions.length === 0}
-    >
-      <option value="">No Department</option>
-      {departmentOptions.map((dept) => (
-        <option key={dept.id} value={dept.id}>
-          {dept.name}
-        </option>
-      ))}
-    </select>
-  ) : (
-    getDepartmentName(user.department)
-  )}
-</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {editUserIds.has(user._id) ? (
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleUpdateUser(user._id)}
-                          disabled={updatingUserId === user._id}
-                          className={`px-3 py-1 text-sm font-medium rounded-md ${
-                            updatingUserId === user._id
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              : 'bg-blue-600 text-white hover:bg-blue-700'
-                          } transition-colors`}
-                        >
-                          {updatingUserId === user._id ? 'Saving...' : 'Save'}
-                        </button>
-                        <button
-                          onClick={() => handleCancelEdit(user._id)}
-                          className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => handleEditClick(user)}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                      <select
+                        name="department"
+                        value={editFormData[user._id]?.department || ''}
+                        onChange={(e) => handleEditFormChange(user._id, e)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isDepartmentsLoading || departmentOptions.length === 0}
                       >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                        <option value="">No Department</option>
+                        {departmentOptions.map((dept) => (
+                          <option key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      getDepartmentName(user.department?._id || user.department)
                     )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {editUserIds.has(user._id) && currentUser?.role === 'super_admin' ? (
+                      <select
+                        name="reportingTo"
+                        value={editFormData[user._id]?.reportingTo || ''}
+                        onChange={(e) => handleEditFormChange(user._id, e)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={userOptions.length === 0}
+                      >
+                        <option value="">None</option>
+                        {userOptions
+                          .filter((u) => u.id !== user._id)
+                          .map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.name} ({u.email}) - {capitalizeRole(u.role)}
+                            </option>
+                          ))}
+                      </select>
+                    ) : (
+                      getReportingToName(user.reportingTo?._id || user.reportingTo)
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {user.isActive ? 'Active' : 'Inactive'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <div className="flex space-x-2">
+                      {editUserIds.has(user._id) ? (
+                        <>
+                          <button
+                            onClick={() => handleUpdateUser(user._id)}
+                            disabled={updatingUserId === user._id || isAssigningUser}
+                            className={`px-3 py-1 text-sm font-medium rounded-md ${
+                              updatingUserId === user._id || isAssigningUser
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                            } transition-colors`}
+                          >
+                            {updatingUserId === user._id || isAssigningUser ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            onClick={() => handleCancelEdit(user._id)}
+                            className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleEditClick(user)}
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                            title="Edit User"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleUserStatus(user._id)}
+                            disabled={updatingUserId === user._id || isTogglingStatus}
+                            className={`px-3 py-1 text-sm font-medium rounded-md ${
+                              updatingUserId === user._id || isTogglingStatus
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : user.isActive
+                                ? 'bg-red-600 text-white hover:bg-red-700'
+                                : 'bg-green-600 text-white hover:bg-green-700'
+                            } transition-colors`}
+                            title={user.isActive ? 'Deactivate User' : 'Activate User'}
+                          >
+                            {updatingUserId === user._id || isTogglingStatus
+                              ? 'Toggling...'
+                              : user.isActive
+                              ? 'Deactivate'
+                              : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() => handleOpenSubObjectiveModal(user)}
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                            title="View Sub-Objectives"
+                            disabled={!user.SubObjective}
+                          >
+                            <User className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -362,6 +524,51 @@ const sortedAndFilteredUsers = useMemo(() => {
           </tbody>
         </table>
       </div>
+
+      {/* Sub-Objective Modal */}
+      {isSubObjectiveModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Sub-Objectives for {selectedUser.name}
+              </h3>
+              <button
+                onClick={handleCloseSubObjectiveModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              {selectedUser.SubObjective ? (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Sub-Objective</h4>
+                  <p className="text-sm text-gray-600">
+                    <strong>Title:</strong> {selectedUser.SubObjective.title || 'No title'}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Description:</strong> {selectedUser.SubObjective.description || 'No description'}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Status:</strong> {selectedUser.SubObjective.status || 'Unknown'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">No sub-objectives assigned.</p>
+              )}
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={handleCloseSubObjectiveModal}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (

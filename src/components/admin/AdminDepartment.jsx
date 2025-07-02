@@ -40,7 +40,7 @@ const AdminDepartments = () => {
     const heads = usersData.users
       .filter((user) => {
         const role = user.role?.toLowerCase();
-        return ['admin', 'manager'].includes(role);
+        return ['admin', 'manager', "staff"].includes(role);
       })
       .map((user) => ({
         id: user._id,
@@ -51,6 +51,8 @@ const AdminDepartments = () => {
     console.log('Eligible heads:', heads); // Debug
     return heads;
   }, [usersData?.users]);
+
+  console.log("users are", usersData)
 
   // Check for unique department name
   const isDepartmentNameUnique = (name, currentDepartmentId = null) => {

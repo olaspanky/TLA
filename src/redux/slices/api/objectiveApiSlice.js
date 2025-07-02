@@ -88,7 +88,7 @@ export const objectivesApiSlice = apiSlice.injectEndpoints({
     approveObjectiveCompletion: builder.mutation({
       query: (id) => ({
         url: `${OBJECTIVES_URL}/${id}/approve-completion`,
-        method: "PATCH",
+        method: "GET",
       }),
       invalidatesTags: ["Objectives", "PerformanceReview"],
     }),
@@ -96,7 +96,7 @@ export const objectivesApiSlice = apiSlice.injectEndpoints({
     rejectObjectiveCompletion: builder.mutation({
       query: (id) => ({
         url: `${OBJECTIVES_URL}/${id}/reject-completion`,
-        method: "PATCH",
+        method: "GET",
       }),
       invalidatesTags: ["Objectives", "PerformanceReview"],
     }),

@@ -1,7 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Filter, Plus, Calendar, ExternalLink, MessageSquare, MoreHorizontal, X, Edit2, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Filter,
+  Plus,
+  Calendar,
+  ExternalLink,
+  MessageSquare,
+  MoreHorizontal,
+  X,
+  Edit2,
+  ChevronDown,
+  ChevronUp,
+  Info,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useGetDepartmentObjectivesQuery, useAddObjectiveCommentMutation, useUpdateObjectiveMutation, useAcceptObjectiveMutation, useDeclineObjectiveMutation, useUpdateObjectiveProgressMutation } from '../redux/slices/api/objectiveApiSlice';
+import {
+  useGetDepartmentObjectivesQuery,
+  useAddObjectiveCommentMutation,
+  useUpdateObjectiveMutation,
+  useAcceptObjectiveMutation,
+  useDeclineObjectiveMutation,
+  useUpdateObjectiveProgressMutation,
+  // New mutation hooks for approving/rejecting completion
+  useApproveObjectiveCompletionMutation,
+  useRejectObjectiveCompletionMutation,
+} from '../redux/slices/api/objectiveApiSlice';
 import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
 
@@ -9,17 +31,11 @@ const ProgressTracking = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [isActionLoading, setIsActionLoading] = useState({}); // Track loading state per objective
-
-  // Log the user object
-  useEffect(() => {
-    console.log('User object from auth slice:', user);
-    if (user) {
-      console.log('Department-related fields:', {
-        departmentId: user.department?._id,
-        department: user.department,
-      });
-    }
-  }, [user]);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [selectedObjective, setSelectedObjective] = useState(null);
+  const [viewedObjectives, setViewedObjectives] = useState({}); // Track which objectives' tasks have been viewed
+  // New state for filter modal
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   // State for filters, pagination, and modals
   const [filters, setFilters] = useState({
@@ -30,6 +46,7 @@ const ProgressTracking = () => {
     order: 'desc',
     page: 1,
     limit: 10,
+    progressRange: '', // New filter for progress range (e.g., '75-100')
   });
   const [commentInput, setCommentInput] = useState('');
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
@@ -57,6 +74,9 @@ const ProgressTracking = () => {
   const [acceptObjective, { isLoading: isAccepting }] = useAcceptObjectiveMutation();
   const [declineObjective, { isLoading: isDeclining }] = useDeclineObjectiveMutation();
   const [updateObjectiveProgress, { isLoading: isUpdatingProgress }] = useUpdateObjectiveProgressMutation();
+  // New mutation hooks
+  const [approveObjectiveCompletion, { isLoading: isApprovingCompletion }] = useApproveObjectiveCompletionMutation();
+  const [rejectObjectiveCompletion, { isLoading: isRejectingCompletion }] = useRejectObjectiveCompletionMutation();
 
   // Handle error display
   useEffect(() => {
@@ -69,13 +89,18 @@ const ProgressTracking = () => {
   // Normalize URL to remove double slashes
   const normalizeUrl = (url) => {
     if (!url) return null;
-    return url.replace(/([^:]\/)\/+/g, '$1'); // Replace multiple slashes with single slash
+    return url.replace(/([^:]\/)\/+/g, '$1');
   };
 
-  // Handle accept objective
+  // Handle accept objective (for objectives with progress < 75%)
   const handleAcceptObjective = async (objective) => {
     if (!objective._id || !objective.acceptLink) {
       toast.error('Invalid objective ID or accept link');
+      return;
+    }
+
+    if (!viewedObjectives[objective._id]) {
+      toast.error('Please view task details before accepting');
       return;
     }
 
@@ -87,11 +112,7 @@ const ProgressTracking = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          // Add Authorization header if needed
-          // 'Authorization': `Bearer ${user.token}`,
         },
-        // Add body if required by API
-        // body: JSON.stringify({}),
       });
 
       if (!response.ok) {
@@ -108,12 +129,11 @@ const ProgressTracking = () => {
       console.error('Error accepting objective:', err);
       toast.error(
         err.message.includes('Failed to fetch')
-          ? 'Network error: Unable to connect to the server. Please check your connection or server configuration.'
+          ? 'Network error: Unable to connect to the server.'
           : err.message || 'Failed to accept objective',
         { position: 'top-right', duration: 5000 }
       );
 
-      // Fallback to mutation hook if link fails
       try {
         await acceptObjective({ objectiveId: objective._id }).unwrap();
         toast.success(`Objective "${objective.title}" accepted successfully via fallback!`, {
@@ -129,10 +149,15 @@ const ProgressTracking = () => {
     }
   };
 
-  // Handle decline objective
+  // Handle decline objective (for objectives with progress < 75%)
   const handleDeclineObjective = async (objective) => {
     if (!objective._id || !objective.declineLink) {
       toast.error('Invalid objective ID or decline link');
+      return;
+    }
+
+    if (!viewedObjectives[objective._id]) {
+      toast.error('Please view task details before declining');
       return;
     }
 
@@ -144,11 +169,7 @@ const ProgressTracking = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Add Authorization header if needed
-          // 'Authorization': `Bearer ${user.token}`,
         },
-        // Add body if required by API
-        // body: JSON.stringify({}),
       });
 
       if (!response.ok) {
@@ -165,12 +186,11 @@ const ProgressTracking = () => {
       console.error('Error declining objective:', err);
       toast.error(
         err.message.includes('Failed to fetch')
-          ? 'Network error: Unable to connect to the server. Please check your connection or server configuration.'
+          ? 'Network error: Unable to connect to the server.'
           : err.message || 'Failed to decline objective',
         { position: 'top-right', duration: 5000 }
       );
 
-      // Fallback to mutation hook if link fails
       try {
         await declineObjective({ objectiveId: objective._id }).unwrap();
         toast.success(`Objective "${objective.title}" declined successfully via fallback!`, {
@@ -186,9 +206,70 @@ const ProgressTracking = () => {
     }
   };
 
+  // Handle approve completion (for objectives with progress >= 75%)
+  const handleApproveCompletion = async (objective) => {
+    if (!objective._id) {
+      toast.error('Invalid objective ID');
+      return;
+    }
+
+    if (!viewedObjectives[objective._id]) {
+      toast.error('Please view task details before approving completion');
+      return;
+    }
+
+    setIsActionLoading((prev) => ({ ...prev, [objective._id]: true }));
+
+    try {
+      await approveObjectiveCompletion(objective._id).unwrap();
+      toast.success(`Objective "${objective.title}" completion approved successfully!`, {
+        position: 'top-right',
+        duration: 5000,
+      });
+      refetch();
+    } catch (err) {
+      toast.error(err?.data?.message || 'Failed to approve objective completion');
+    } finally {
+      setIsActionLoading((prev) => ({ ...prev, [objective._id]: false }));
+    }
+  };
+
+  // Handle reject completion (for objectives with progress >= 75%)
+  const handleRejectCompletion = async (objective) => {
+    if (!objective._id) {
+      toast.error('Invalid objective ID');
+      return;
+    }
+
+    if (!viewedObjectives[objective._id]) {
+      toast.error('Please view task details before rejecting completion');
+      return;
+    }
+
+    setIsActionLoading((prev) => ({ ...prev, [objective._id]: true }));
+
+    try {
+      await rejectObjectiveCompletion(objective._id).unwrap();
+      toast.success(`Objective "${objective.title}" completion rejected successfully!`, {
+        position: 'top-right',
+        duration: 5000,
+      });
+      refetch();
+    } catch (err) {
+      toast.error(err?.data?.message || 'Failed to reject objective completion');
+    } finally {
+      setIsActionLoading((prev) => ({ ...prev, [objective._id]: false }));
+    }
+  };
+
   // Handle filter button click
   const handleFilter = () => {
-    console.log('Filter clicked - Implement filter UI here');
+    setIsFilterModalOpen(true);
+  };
+
+  // Handle filter modal close
+  const handleCloseFilterModal = () => {
+    setIsFilterModalOpen(false);
   };
 
   // Handle Add Objectives button
@@ -206,6 +287,12 @@ const ProgressTracking = () => {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value, page: 1 }));
+  };
+
+  // Apply filters
+  const handleApplyFilters = () => {
+    refetch();
+    setIsFilterModalOpen(false);
   };
 
   // Handle comment input change
@@ -256,9 +343,7 @@ const ProgressTracking = () => {
 
   // Open update modal and pre-fill form
   const handleOpenUpdateModal = (objective) => {
-    if
-
- (!objective._id || typeof objective._id !== 'string') {
+    if (!objective._id || typeof objective._id !== 'string') {
       toast.error('Invalid objective ID');
       return;
     }
@@ -341,11 +426,28 @@ const ProgressTracking = () => {
       await updateObjectiveProgress({ id: objectiveId, progress }).unwrap();
       toast.success('Progress updated successfully');
       refetch();
-trend
       setOpenProgressDropdowns((prev) => ({ ...prev, [objectiveId]: false }));
     } catch (err) {
       toast.error(err?.data?.message || 'Failed to update progress');
     }
+  };
+
+  // Open task details modal
+  const handleOpenTaskModal = (objective) => {
+    if (!objective._id) {
+      toast.error('Invalid objective ID');
+      return;
+    }
+    setSelectedObjective(objective);
+    setIsTaskModalOpen(true);
+    // Mark objective as viewed
+    setViewedObjectives((prev) => ({ ...prev, [objective._id]: true }));
+  };
+
+  // Close task details modal
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setSelectedObjective(null);
   };
 
   return (
@@ -364,7 +466,7 @@ trend
             </button>
             <button
               onClick={handleAddObjectives}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+              className="flex items-center px-4 py-2 bg-green-600 text pulverize-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Objectives
@@ -372,12 +474,122 @@ trend
           </div>
         </div>
 
+        {/* Filter Modal */}
+        {isFilterModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Filter Objectives</h3>
+                <button
+                  onClick={handleCloseFilterModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Search</label>
+                  <input
+                    type="text"
+                    name="search"
+                    value={filters.search}
+                    onChange={handleFilterChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Search by title or description"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <select
+                    name="status"
+                    value={filters.status}
+                    onChange={handleFilterChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All</option>
+                    <option value="Pending Acceptance">Pending Acceptance</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Accepted">Accepted</option>
+                    <option value="Declined">Declined</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Priority Level</label>
+                  <select
+                    name="priorityLevel"
+                    value={filters.priorityLevel}
+                    onChange={handleFilterChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Progress Range</label>
+                  <select
+                    name="progressRange"
+                    value={filters.progressRange}
+                    onChange={handleFilterChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All</option>
+                    <option value="75-100">75-100%</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Sort By</label>
+                  <select
+                    name="sortBy"
+                    value={filters.sortBy}
+                    onChange={handleFilterChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="createdAt">Created At</option>
+                    <option value="progress">Progress</option>
+                    <option value="endDate">Due Date</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Order</label>
+                  <select
+                    name="order"
+                    value={filters.order}
+                    onChange={handleFilterChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                </div>
+              </form>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={handleCloseFilterModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleApplyFilters}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Objectives List */}
         <div className="space-y-6">
           {isLoading ? (
             <div className="text-center text-gray-600">Loading objectives...</div>
           ) : isError ? (
-            <div className="text-center text-red-600">Failed to load objectives: {error?.data?.error || 'Unknown error'}</div>
+            <div className="text-center text-red-600">You are not assigned to any department yet!</div>
           ) : objectivesData?.objectives?.length === 0 ? (
             <div className="text-center text-gray-600">No objectives found.</div>
           ) : (
@@ -385,13 +597,18 @@ trend
               <div key={objective._id} className="bg-white rounded-lg shadow border border-gray-200 p-6">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center">
-                    <h2 className="text-lg font-medium text-gray-900 leading-tight">
+                    <h2
+                      onClick={() => handleOpenTaskModal(objective)}
+                      className="text-lg font-medium text-gray-900 leading-tight cursor-pointer hover:text-blue-600 transition-colors"
+                    >
                       {objective.title}
                     </h2>
                     <span
                       className={`ml-3 px-2 py-1 text-xs font-medium rounded-full ${
                         objective.status === 'Pending Acceptance'
                           ? 'bg-yellow-100 text-yellow-800'
+                          : objective.status === 'In Progress'
+                          ? 'bg-blue-100 text-blue-800'
                           : objective.status === 'Accepted'
                           ? 'bg-green-100 text-green-800'
                           : objective.status === 'Declined'
@@ -427,9 +644,7 @@ trend
                     )}
                   </div>
                 </div>
-                <p className="text-gray-600 mb-6 leading-relaxed">
-                  {objective.description}
-                </p>
+                <p className="text-gray-600 mb-6 leading-relaxed">{objective.description}</p>
                 <div className="mb-4">
                   <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
                     <span>{objective.progress || 0}%</span>
@@ -466,9 +681,7 @@ trend
                       objective.comments.map((comment) => (
                         <div key={comment._id} className="mb-3">
                           <p className="text-sm text-gray-800">{comment.text}</p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(comment.createdAt).toLocaleString()}
-                          </p>
+                          <p className="text-xs text-gray-500">{new Date(comment.createdAt).toLocaleString()}</p>
                         </div>
                       ))
                     ) : (
@@ -482,13 +695,20 @@ trend
                     <span className="text-sm">Due: {new Date(objective.endDate).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    {objective.status === 'Pending Acceptance' && (
+                    <button
+                      onClick={() => handleOpenTaskModal(objective)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      title="View Task Details"
+                    >
+                      <Info className="w-4 h-4" />
+                    </button>
+                    {objective.status === 'Pending Acceptance' && objective.progress < 75 ? (
                       <>
                         <button
                           onClick={() => handleAcceptObjective(objective)}
-                          disabled={isActionLoading[objective._id] || isLoading}
+                          disabled={isActionLoading[objective._id] || isLoading || !viewedObjectives[objective._id]}
                           className={`text-sm font-medium ${
-                            isActionLoading[objective._id] || isLoading
+                            isActionLoading[objective._id] || isLoading || !viewedObjectives[objective._id]
                               ? 'text-gray-400 cursor-not-allowed'
                               : 'text-green-600 hover:text-green-800'
                           } transition-colors`}
@@ -497,9 +717,9 @@ trend
                         </button>
                         <button
                           onClick={() => handleDeclineObjective(objective)}
-                          disabled={isActionLoading[objective._id] || isLoading}
+                          disabled={isActionLoading[objective._id] || isLoading || !viewedObjectives[objective._id]}
                           className={`text-sm font-medium ${
-                            isActionLoading[objective._id] || isLoading
+                            isActionLoading[objective._id] || isLoading || !viewedObjectives[objective._id]
                               ? 'text-gray-400 cursor-not-allowed'
                               : 'text-red-600 hover:text-red-800'
                           } transition-colors`}
@@ -507,7 +727,44 @@ trend
                           {isActionLoading[objective._id] ? 'Declining...' : 'Decline'}
                         </button>
                       </>
-                    )}
+                    ) : objective.progress >= 75 ? (
+                      <>
+                        <button
+                          onClick={() => handleApproveCompletion(objective)}
+                          disabled={
+                            isActionLoading[objective._id] ||
+                            isApprovingCompletion ||
+                            !viewedObjectives[objective._id]
+                          }
+                          className={`text-sm font-medium ${
+                            isActionLoading[objective._id] || isApprovingCompletion || !viewedObjectives[objective._id]
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : 'text-green-600 hover:text-green-800'
+                          } transition-colors`}
+                        >
+                          {isActionLoading[objective._id] || isApprovingCompletion
+                            ? 'Approving...'
+                            : 'Approve Completion'}
+                        </button>
+                        <button
+                          onClick={() => handleRejectCompletion(objective)}
+                          disabled={
+                            isActionLoading[objective._id] ||
+                            isRejectingCompletion ||
+                            !viewedObjectives[objective._id]
+                          }
+                          className={`text-sm font-medium ${
+                            isActionLoading[objective._id] || isRejectingCompletion || !viewedObjectives[objective._id]
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : 'text-red-600 hover:text-red-800'
+                          } transition-colors`}
+                        >
+                          {isActionLoading[objective._id] || isRejectingCompletion
+                            ? 'Rejecting...'
+                            : 'Reject Completion'}
+                        </button>
+                      </>
+                    ) : null}
                     <button
                       onClick={() => handleOpenCommentModal(objective._id)}
                       className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -553,6 +810,181 @@ trend
           </div>
         )}
       </div>
+
+      {/* Task Details Modal */}
+      {isTaskModalOpen && selectedObjective && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-5xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Task Details: {selectedObjective.title}</h3>
+              <button
+                onClick={handleCloseTaskModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4 grid grid-cols-2">
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Objective ID</h4>
+                <p className="text-sm text-gray-600">{selectedObjective._id}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Title</h4>
+                <p className="text-sm text-gray-600">{selectedObjective.title}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Description</h4>
+                <p className="text-sm text-gray-600">{selectedObjective.description || 'No description provided.'}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Status</h4>
+                <p className="text-sm text-gray-600">{selectedObjective.status || 'Unknown'}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Priority Level</h4>
+                <p className="text-sm text-gray-600">{selectedObjective.priorityLevel || 'Medium'}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Progress</h4>
+                <p className="text-sm text-gray-600">{selectedObjective.progress || 0}%</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Start Date</h4>
+                <p className="text-sm text-gray-600">
+                  {selectedObjective.startDate
+                    ? new Date(selectedObjective.startDate).toLocaleDateString()
+                    : 'Not set'}
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">End Date</h4>
+                <p className="text-sm text-gray-600">
+                  {selectedObjective.endDate
+                    ? new Date(selectedObjective.endDate).toLocaleDateString()
+                    : 'Not set'}
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Created By</h4>
+                <p className="text-sm text-gray-600">
+                  {selectedObjective.createdBy?.name} ({selectedObjective.createdBy?.email})
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Assigned To</h4>
+                <p className="text-sm text-gray-600">
+                  {selectedObjective.assignedTo?.name} ({selectedObjective.assignedTo?.email})
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Created At</h4>
+                <p className="text-sm text-gray-600">{new Date(selectedObjective.createdAt).toLocaleString()}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Updated At</h4>
+                <p className="text-sm text-gray-600">{new Date(selectedObjective.updatedAt).toLocaleString()}</p>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Tasks (Sub-Objectives)</h4>
+                {selectedObjective.subObjectives?.length > 0 ? (
+                  <ul className="list-disc pl-5 text-sm text-gray-600">
+                    {selectedObjective.subObjectives.map((subObjective, index) => (
+                      <li key={index} className="mb-2">
+                        <span className="font-medium">{subObjective.title || `Task ${index + 1}`}</span>
+                        {subObjective.description && `: ${subObjective.description}`}
+                        {subObjective.status && (
+                          <span className="ml-2 text-xs text-gray-500">({subObjective.status})</span>
+                        )}
+                        {subObjective.dueDate && (
+                          <span className="ml-2 text-xs text-gray-500">
+                            Due: {new Date(subObjective.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-600">No tasks assigned to this objective.</p>
+                )}
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Comments</h4>
+                {selectedObjective.comments?.length > 0 ? (
+                  <ul className="list-disc pl-5 text-sm text-gray-600">
+                    {selectedObjective.comments.map((comment) => (
+                      <li key={comment._id} className="mb-2">
+                        <p>{comment.text}</p>
+                        <p className="text-xs text-gray-500">{new Date(comment.createdAt).toLocaleString()}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-600">No comments available.</p>
+                )}
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Progress Notes</h4>
+                {selectedObjective.progressNotes?.length > 0 ? (
+                  <ul className="list-disc pl-5 text-sm text-gray-600">
+                    {selectedObjective.progressNotes.map((note, index) => (
+                      <li key={index} className="mb-2">
+                        <p>{note.text || `Note ${index + 1}`}</p>
+                        <p className="text-xs text-gray-500">
+                          {note.createdAt ? new Date(note.createdAt).toLocaleString() : 'Date not available'}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-gray-600">No progress notes available.</p>
+                )}
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-700">Links</h4>
+                <p className="text-sm text-gray-600">
+                  Accept Link:{' '}
+                  {selectedObjective.acceptLink ? (
+                    <a
+                      href={normalizeUrl(`https://${selectedObjective.acceptLink}`)}
+                      className="text-blue-600 hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View
+                    </a>
+                  ) : (
+                    'Not available'
+                  )}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Decline Link:{' '}
+                  {selectedObjective.declineLink ? (
+                    <a
+                      href={normalizeUrl(`https://${selectedObjective.declineLink}`)}
+                      className="text-blue-600 hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View
+                    </a>
+                  ) : (
+                    'Not available'
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={handleCloseTaskModal}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Comment Modal */}
       {isCommentModalOpen && (
