@@ -585,7 +585,7 @@ const ProgressTracking = () => {
         )}
 
         {/* Objectives List */}
-        <div className="space-y-6">
+       <div className="space-y-6">
           {isLoading ? (
             <div className="text-center text-gray-600">Loading objectives...</div>
           ) : isError ? (
@@ -721,49 +721,19 @@ const ProgressTracking = () => {
                           className={`text-sm font-medium ${
                             isActionLoading[objective._id] || isLoading || !viewedObjectives[objective._id]
                               ? 'text-gray-400 cursor-not-allowed'
-                              : 'text-red-600 hover:text-red-800'
+                              : 'text-red-600 hover:text yellow-800'
                           } transition-colors`}
                         >
                           {isActionLoading[objective._id] ? 'Declining...' : 'Decline'}
                         </button>
                       </>
                     ) : objective.progress >= 75 ? (
-                      <>
-                        <button
-                          onClick={() => handleApproveCompletion(objective)}
-                          disabled={
-                            isActionLoading[objective._id] ||
-                            isApprovingCompletion ||
-                            !viewedObjectives[objective._id]
-                          }
-                          className={`text-sm font-medium ${
-                            isActionLoading[objective._id] || isApprovingCompletion || !viewedObjectives[objective._id]
-                              ? 'text-gray-400 cursor-not-allowed'
-                              : 'text-green-600 hover:text-green-800'
-                          } transition-colors`}
-                        >
-                          {isActionLoading[objective._id] || isApprovingCompletion
-                            ? 'Approving...'
-                            : 'Approve Completion'}
-                        </button>
-                        <button
-                          onClick={() => handleRejectCompletion(objective)}
-                          disabled={
-                            isActionLoading[objective._id] ||
-                            isRejectingCompletion ||
-                            !viewedObjectives[objective._id]
-                          }
-                          className={`text-sm font-medium ${
-                            isActionLoading[objective._id] || isRejectingCompletion || !viewedObjectives[objective._id]
-                              ? 'text-gray-400 cursor-not-allowed'
-                              : 'text-red-600 hover:text-red-800'
-                          } transition-colors`}
-                        >
-                          {isActionLoading[objective._id] || isRejectingCompletion
-                            ? 'Rejecting...'
-                            : 'Reject Completion'}
-                        </button>
-                      </>
+                      <button
+                        onClick={() => handleOpenTaskModal(objective)}
+                        className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        Review Task
+                      </button>
                     ) : null}
                     <button
                       onClick={() => handleOpenCommentModal(objective._id)}
@@ -812,179 +782,190 @@ const ProgressTracking = () => {
       </div>
 
       {/* Task Details Modal */}
-      {isTaskModalOpen && selectedObjective && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-5xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Task Details: {selectedObjective.title}</h3>
-              <button
-                onClick={handleCloseTaskModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="space-y-4 grid grid-cols-2">
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Objective ID</h4>
-                <p className="text-sm text-gray-600">{selectedObjective._id}</p>
+     {isTaskModalOpen && selectedObjective && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-5xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Task Details: {selectedObjective.title}</h3>
+                <button
+                  onClick={handleCloseTaskModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Title</h4>
-                <p className="text-sm text-gray-600">{selectedObjective.title}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Description</h4>
-                <p className="text-sm text-gray-600">{selectedObjective.description || 'No description provided.'}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Status</h4>
-                <p className="text-sm text-gray-600">{selectedObjective.status || 'Unknown'}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Priority Level</h4>
-                <p className="text-sm text-gray-600">{selectedObjective.priorityLevel || 'Medium'}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Progress</h4>
-                <p className="text-sm text-gray-600">{selectedObjective.progress || 0}%</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Start Date</h4>
-                <p className="text-sm text-gray-600">
-                  {selectedObjective.startDate
-                    ? new Date(selectedObjective.startDate).toLocaleDateString()
-                    : 'Not set'}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">End Date</h4>
-                <p className="text-sm text-gray-600">
-                  {selectedObjective.endDate
-                    ? new Date(selectedObjective.endDate).toLocaleDateString()
-                    : 'Not set'}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Created By</h4>
-                <p className="text-sm text-gray-600">
-                  {selectedObjective.createdBy?.name} ({selectedObjective.createdBy?.email})
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Assigned To</h4>
-                <p className="text-sm text-gray-600">
-                  {selectedObjective.assignedTo?.name} ({selectedObjective.assignedTo?.email})
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Created At</h4>
-                <p className="text-sm text-gray-600">{new Date(selectedObjective.createdAt).toLocaleString()}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Updated At</h4>
-                <p className="text-sm text-gray-600">{new Date(selectedObjective.updatedAt).toLocaleString()}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Tasks (Sub-Objectives)</h4>
-                {selectedObjective.subObjectives?.length > 0 ? (
-                  <ul className="list-disc pl-5 text-sm text-gray-600">
-                    {selectedObjective.subObjectives.map((subObjective, index) => (
-                      <li key={index} className="mb-2">
-                        <span className="font-medium">{subObjective.title || `Task ${index + 1}`}</span>
-                        {subObjective.description && `: ${subObjective.description}`}
-                        {subObjective.status && (
-                          <span className="ml-2 text-xs text-gray-500">({subObjective.status})</span>
-                        )}
-                        {subObjective.dueDate && (
-                          <span className="ml-2 text-xs text-gray-500">
-                            Due: {new Date(subObjective.dueDate).toLocaleDateString()}
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-600">No tasks assigned to this objective.</p>
-                )}
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Comments</h4>
-                {selectedObjective.comments?.length > 0 ? (
-                  <ul className="list-disc pl-5 text-sm text-gray-600">
-                    {selectedObjective.comments.map((comment) => (
-                      <li key={comment._id} className="mb-2">
-                        <p>{comment.text}</p>
-                        <p className="text-xs text-gray-500">{new Date(comment.createdAt).toLocaleString()}</p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-600">No comments available.</p>
-                )}
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Progress Notes</h4>
-                {selectedObjective.progressNotes?.length > 0 ? (
-                  <ul className="list-disc pl-5 text-sm text-gray-600">
-                    {selectedObjective.progressNotes.map((note, index) => (
-                      <li key={index} className="mb-2">
-                        <p>{note.text || `Note ${index + 1}`}</p>
-                        <p className="text-xs text-gray-500">
-                          {note.createdAt ? new Date(note.createdAt).toLocaleString() : 'Date not available'}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-600">No progress notes available.</p>
-                )}
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-700">Links</h4>
-                <p className="text-sm text-gray-600">
-                  Accept Link:{' '}
-                  {selectedObjective.acceptLink ? (
-                    <a
-                      href={normalizeUrl(`https://${selectedObjective.acceptLink}`)}
-                      className="text-blue-600 hover:underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View
-                    </a>
+              <div className="space-y-4 grid grid-cols-2">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Objective ID</h4>
+                  <p className="text-sm text-gray-600">{selectedObjective._id}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Title</h4>
+                  <p className="text-sm text-gray-600">{selectedObjective.title}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Description</h4>
+                  <p className="text-sm text-gray-600">{selectedObjective.description || 'No description provided.'}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Status</h4>
+                  <p className="text-sm text-gray-600">{selectedObjective.status || 'Unknown'}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Priority Level</h4>
+                  <p className="text-sm text-gray-600">{selectedObjective.priorityLevel || 'Medium'}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Progress</h4>
+                  <p className="text-sm text-gray-600">{selectedObjective.progress || 0}%</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Start Date</h4>
+                  <p className="text-sm text-gray-600">
+                    {selectedObjective.startDate
+                      ? new Date(selectedObjective.startDate).toLocaleDateString()
+                      : 'Not set'}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">End Date</h4>
+                  <p className="text-sm text-gray-600">
+                    {selectedObjective.endDate
+                      ? new Date(selectedObjective.endDate).toLocaleDateString()
+                      : 'Not set'}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Created By</h4>
+                  <p className="text-sm text-gray-600">
+                    {selectedObjective.createdBy?.name} ({selectedObjective.createdBy?.email})
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Assigned To</h4>
+                  <p className="text-sm text-gray-600">
+                    {selectedObjective.assignedTo?.name} ({selectedObjective.assignedTo?.email})
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Created At</h4>
+                  <p className="text-sm text-gray-600">{new Date(selectedObjective.createdAt).toLocaleString()}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Updated At</h4>
+                  <p className="text-sm text-gray-600">{new Date(selectedObjective.updatedAt).toLocaleString()}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Tasks (Sub-Objectives)</h4>
+                  {selectedObjective.subObjectives?.length > 0 ? (
+                    <ul className="list-disc pl-5 text-sm text-gray-600">
+                      {selectedObjective.subObjectives.map((subObjective, index) => (
+                        <li key={index} className="mb-2">
+                          <span className="font-medium">{subObjective.title || `Task ${index + 1}`}</span>
+                          {subObjective.description && `: ${subObjective.description}`}
+                          {subObjective.status && (
+                            <span className="ml-2 text-xs text-gray-500">({subObjective.status})</span>
+                          )}
+                          {subObjective.dueDate && (
+                            <span className="ml-2 text-xs text-gray-500">
+                              Due: {new Date(subObjective.dueDate).toLocaleDateString()}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   ) : (
-                    'Not available'
+                    <p className="text-sm text-gray-600">No tasks assigned to this objective.</p>
                   )}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Decline Link:{' '}
-                  {selectedObjective.declineLink ? (
-                    <a
-                      href={normalizeUrl(`https://${selectedObjective.declineLink}`)}
-                      className="text-blue-600 hover:underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View
-                    </a>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Comments</h4>
+                  {selectedObjective.comments?.length > 0 ? (
+                    <ul className="list-disc pl-5 text-sm text-gray-600">
+                      {selectedObjective.comments.map((comment) => (
+                        <li key={comment._id} className="mb-2">
+                          <p>{comment.text}</p>
+                          <p className="text-xs text-gray-500">{new Date(comment.createdAt).toLocaleString()}</p>
+                        </li>
+                      ))}
+                    </ul>
                   ) : (
-                    'Not available'
+                    <p className="text-sm text-gray-600">No comments available.</p>
                   )}
-                </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700">Progress Notes</h4>
+                  {selectedObjective.progressNotes?.length > 0 ? (
+                    <ul className="list-disc pl-5 text-sm text-gray-600">
+                      {selectedObjective.progressNotes.map((note, index) => (
+                        <li key={index} className="mb-2">
+                          <p>{note.text || `Note ${index + 1}`}</p>
+                          <p className="text-xs text-gray-500">
+                            {note.createdAt ? new Date(note.createdAt).toLocaleString() : 'Date not available'}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-600">No progress notes available.</p>
+                  )}
+                </div>
+              
               </div>
-            </div>
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={handleCloseTaskModal}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                Close
-              </button>
+              <div className="flex justify-end mt-6 space-x-3">
+                {selectedObjective.progress >= 75 && (
+                  <>
+                    <button
+                      onClick={() => handleApproveCompletion(selectedObjective)}
+                      disabled={
+                        isActionLoading[selectedObjective._id] ||
+                        isApprovingCompletion ||
+                        !viewedObjectives[selectedObjective._id]
+                      }
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                        isActionLoading[selectedObjective._id] ||
+                        isApprovingCompletion ||
+                        !viewedObjectives[selectedObjective._id]
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-green-600 text-white hover:bg-green-700'
+                      }`}
+                    >
+                      {isActionLoading[selectedObjective._id] || isApprovingCompletion
+                        ? 'Approving...'
+                        : 'Approve Completion'}
+                    </button>
+                    <button
+                      onClick={() => handleRejectCompletion(selectedObjective)}
+                      disabled={
+                        isActionLoading[selectedObjective._id] ||
+                        isRejectingCompletion ||
+                        !viewedObjectives[selectedObjective._id]
+                      }
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                        isActionLoading[selectedObjective._id] ||
+                        isRejectingCompletion ||
+                        !viewedObjectives[selectedObjective._id]
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-red-600 text-white hover:bg-red-700'
+                      }`}
+                    >
+                      {isActionLoading[selectedObjective._id] || isRejectingCompletion
+                        ? 'Rejecting...'
+                        : 'Reject Completion'}
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={handleCloseTaskModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
 
       {/* Comment Modal */}
       {isCommentModalOpen && (

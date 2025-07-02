@@ -195,7 +195,7 @@ const Topbar = () => {
 
       {/* Greeting and Navigation */}
       <div className="flex justify-between items-center mt-4">
-       <div className="relative overflow-hidden bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 p-4 rounded-xl shadow-lg border border-slate-700/50">
+       <div className="relative overflow-hidden p-4">
   {/* Background decoration */}
   <div className="absolute inset-0 "></div>
   <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-xl"></div>
@@ -204,7 +204,7 @@ const Topbar = () => {
   <div className="relative z-10 space-y-2">
     {/* Welcome greeting */}
     <div className="flex items-center gap-2">
-      <div className="w-1.5 h-1.5 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse"></div>
+      <div className="w-1.5 h-1.5  rounded-full animate-pulse"></div>
       <h1 className="text-lg font-bold bg-gradient-to-r from-white to-slate-200 bg-clip-text text-transparent">
         Hi, {user?.name || "Gbolade"}
       </h1>

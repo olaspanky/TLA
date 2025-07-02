@@ -50,12 +50,48 @@ const Dashboard = () => {
     error: ratingError 
   } = useGetUserRatingQuery(user?.id);
 
-  // Demo data for stats (replacing performanceScore with userRatingData.rating)
+  // Calculate goal completion based on sub-objectives
+  const calculateGoalCompletion = () => {
+    let totalTasks = 0;
+    let completedTasks = 0;
+
+    objectives.forEach((objective) => {
+      if (objective.subObjectives && Array.isArray(objective.subObjectives)) {
+        console.log(`Objective ${objective._id} subObjectives:`, objective.subObjectives); // Debug subObjectives structure
+        totalTasks += objective.subObjectives.length;
+
+        // Check if the objective itself is marked as "Completed"
+        if (objective.status === 'Completed') {
+          completedTasks += objective.subObjectives.length; // Assume all sub-objectives are completed
+        } else {
+          // Count completed sub-objectives based on status or progress
+          completedTasks += objective.subObjectives.filter((subObjective) => {
+            // Adjust this condition based on your subObjectives structure
+            return (
+              subObjective.status === 'completed' || 
+              subObjective.status === 'Completed' || 
+              subObjective.progress === 100 || 
+              subObjective.isCompleted === true
+            );
+          }).length;
+        }
+      }
+    });
+
+    console.log(`Total tasks: ${totalTasks}, Completed tasks: ${completedTasks}`); // Debug calculation
+
+    if (totalTasks === 0) return 'No tasks available'; // Handle no tasks case
+    const completionPercentage = Math.round((completedTasks / totalTasks) * 100);
+    return `${completionPercentage}%`;
+  };
+
+  // Stats data
   const performanceScore = userRatingData ? (userRatingData.rating / 20).toFixed(1) : 0; // Convert 0-100 to 0-5 scale
   const gaugeValue = userRatingData ? userRatingData.rating : 0; // Use raw rating (0-100) for gauge
-  const goalCompletion = 85;
-  const skillGrowth = 7;
-  const feedbackScore = 4.7;
+  const goalCompletion = calculateGoalCompletion(); // Dynamic calculation
+  const skillGrowth = 'No data from your manager';
+  const feedbackScore = 'No feedback score from manager';
+
 
   const tabs = ['Home', 'Objectives', 'Progress Tracking', 'Development plan'];
 
@@ -298,26 +334,23 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div key="goal-completion" className="bg-white rounded-lg shadow p-6">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Goal Completion</h3>
             <div className="flex items-baseline space-x-2">
-              <span className="text-3xl font-bold text-gray-900">{goalCompletion}%</span>
-              <span className="text-sm text-green-600 font-medium">↑ 0.3%</span>
+              <span className="text-3xl font-bold text-gray-900">{goalCompletion}</span>
             </div>
           </div>
           <div key="skill-growth" className="bg-white rounded-lg shadow p-6">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Skill Growth</h3>
             <div className="flex items-baseline space-x-2">
-              <span className="text-3xl font-bold text-gray-900">+{skillGrowth}%</span>
-              <span className="text-sm text-green-600 font-medium">↑ 0.3%</span>
+              <span className="text-lg text-gray-600">{skillGrowth}</span>
             </div>
           </div>
           <div key="feedback-score" className="bg-white rounded-lg shadow p-6">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Feedback Score</h3>
             <div className="flex items-baseline space-x-2">
-              <span className="text-3xl font-bold text-gray-900">{feedbackScore}</span>
-              <span className="text-sm text-gray-500">Average Rating</span>
+              <span className="text-lg text-gray-600">{feedbackScore}</span>
             </div>
           </div>
         </div>
@@ -427,23 +460,31 @@ const Dashboard = () => {
                       )}
                     </button>
                   </div>
-
-                  {openCommentDropdowns[objective._id] && (
-                    <div className="ml-4 mb-4 border-l-2 border-gray-200 pl-4">
-                      {objective.comments?.length > 0 ? (
-                        objective.comments.map((comment) => (
-                          <div key={comment._id} className="mb-3">
-                            <p className="text-sm text-gray-800">{comment.text}</p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(comment.date).toLocaleString()}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-gray-600">No comments yet.</p>
-                      )}
-                    </div>
-                  )}
+{openCommentDropdowns[objective._id] && (
+  <div className="ml-4 mb-4 border-l-2 border-gray-200 pl-4">
+    {objective.comments?.length > 0 ? (
+      objective.comments.map((comment) => (
+        <div key={comment._id} className="mb-3 last:mb-0">
+          <p className="text-sm text-gray-800 mb-1 leading-relaxed">
+            {comment.text}
+          </p>
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span className="font-medium text-gray-700">
+              {comment.author.name}
+            </span>
+            <time dateTime={comment.date} className="text-gray-400">
+              {new Date(comment.date).toLocaleString()}
+            </time>
+          </div>
+        </div>
+      ))
+    ) : (
+      <div className="py-2">
+        <p className="text-sm text-gray-500 italic">No comments yet.</p>
+      </div>
+    )}
+  </div>
+)}
 
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center text-gray-500">
