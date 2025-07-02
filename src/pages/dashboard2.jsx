@@ -87,7 +87,7 @@ const Dashboard = () => {
       setIsDepartmentWarningModalOpen(true);
       return;
     }
-    navigate('/objective');
+    navigate('/tasks');
   };
 
   // Close department warning modal
