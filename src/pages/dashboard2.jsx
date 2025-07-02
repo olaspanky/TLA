@@ -432,7 +432,7 @@ const Dashboard = () => {
                           <div key={comment._id} className="mb-3">
                             <p className="text-sm text-gray-800">{comment.text}</p>
                             <p className="text-xs text-gray-500">
-                              {new Date(comment.createdAt).toLocaleString()}
+                              {new Date(comment.date).toLocaleString()}
                             </p>
                           </div>
                         ))
