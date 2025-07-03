@@ -421,7 +421,7 @@ const Dashboard = () => {
                             <option value={100}>100%</option>
                           </select>
                         </div>
-                      )}
+                      )} 
                     </div>
                                       <p className="text-xs text-gray-600 mb-4">{objective.assignedTo.name}</p>
 

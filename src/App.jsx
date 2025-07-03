@@ -35,7 +35,7 @@ function Layout() {
     <div className='w-full h-screen flex flex-col md:flex-row'>
     
 
-      <div className='flex-1 overflow-y-auto'>
+      <div className='flex-1 overflow-y-auto pb-12'>
         <Navbar />
 
         <div className='z-30  2xl:mt-[-100px] lg:mt-[-60px]  2xl:mx-72 mx-20 rounded-lg shadow-md'> 

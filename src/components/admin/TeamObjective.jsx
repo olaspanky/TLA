@@ -358,7 +358,7 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
             <div className="text-3xl font-bold text-gray-900 mb-2">{retentionRate}%</div>
             <div className="flex items-center gap-1">
               <ArrowDown size={12} className="text-red-500" />
-              <span className="text-xs text-red-600"> de3%crease vs last quarter</span>
+              <span className="text-xs text-red-600"> decrease vs last quarter</span>
             </div>
           </div>
         </div>
@@ -424,7 +424,7 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
                     onClick={() => handleOpenModal(item)}
                     className="cursor-pointer gap-2 border-b border-gray-100 last:border-b-0 pb-4 last:pb-0 hover:bg-gray-50 transition-colors"
                   >
-                    <h4 className="font-medium text-gray-900 text-sm leading-tight mb-1">{item.title}</h4>
+                    <h4 className="font-medium text-gray-900 text-sm leading-tight mb-1">{item.title.substring(0, 70)}...</h4>
                     <div className="flex justify-between">
                       <p className="text-xs text-gray-600 mb-2">{item.subtitle}</p>
                       <p className="text-xs text-gray-500">{item.lastUpdated}</p>

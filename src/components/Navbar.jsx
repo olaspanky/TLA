@@ -39,7 +39,7 @@ const superAdminLinks = [
   { label: "User Management", link: "sadmin1", icon: <MdTaskAlt /> },
   { label: "Progress Tracking", link: "progress", icon: <MdOutlinePendingActions /> },
   { label: "Development plan", link: "sadmin3", icon: <MdTaskAlt /> },
-      { label: "Admin", link: "admin", icon: <MdTaskAlt /> },
+  { label: "Admin", link: "admin", icon: <MdTaskAlt /> },
 
 ];
 
@@ -113,7 +113,7 @@ const Topbar = () => {
   }, []);
 
   const getFilteredLinks = () => {
-    if (!user) return staffLinks;
+    if (user.role === "staff") return staffLinks;
     if (user.role === "super_admin") return superAdminLinks;
     if (user.role === "admin" || "manager") return adminLinks;
     return staffLinks;

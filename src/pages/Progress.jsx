@@ -20,7 +20,6 @@ import {
   useAcceptObjectiveMutation,
   useDeclineObjectiveMutation,
   useUpdateObjectiveProgressMutation,
-  // New mutation hooks for approving/rejecting completion
   useApproveObjectiveCompletionMutation,
   useRejectObjectiveCompletionMutation,
 } from '../redux/slices/api/objectiveApiSlice';
@@ -30,14 +29,13 @@ import { toast } from 'sonner';
 const ProgressTracking = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const [isActionLoading, setIsActionLoading] = useState({}); // Track loading state per objective
+  const isAdmin = user?.role === 'admin'; // Check if user is an admin
+  const [isActionLoading, setIsActionLoading] = useState({});
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [selectedObjective, setSelectedObjective] = useState(null);
-  const [viewedObjectives, setViewedObjectives] = useState({}); // Track which objectives' tasks have been viewed
-  // New state for filter modal
+  const [viewedObjectives, setViewedObjectives] = useState({});
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
-  // State for filters, pagination, and modals
   const [filters, setFilters] = useState({
     search: '',
     status: '',
@@ -46,7 +44,7 @@ const ProgressTracking = () => {
     order: 'desc',
     page: 1,
     limit: 10,
-    progressRange: '', // New filter for progress range (e.g., '75-100')
+    progressRange: '',
   });
   const [commentInput, setCommentInput] = useState('');
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
@@ -63,7 +61,6 @@ const ProgressTracking = () => {
   const [openCommentDropdowns, setOpenCommentDropdowns] = useState({});
   const [openProgressDropdowns, setOpenProgressDropdowns] = useState({});
 
-  // Fetch objectives and mutations
   const departmentId = user?.department?._id || '60d0fe4f5311236168a109ca';
   const { data: objectivesData, isLoading, isError, error, refetch } = useGetDepartmentObjectivesQuery({
     departmentId,
@@ -74,11 +71,9 @@ const ProgressTracking = () => {
   const [acceptObjective, { isLoading: isAccepting }] = useAcceptObjectiveMutation();
   const [declineObjective, { isLoading: isDeclining }] = useDeclineObjectiveMutation();
   const [updateObjectiveProgress, { isLoading: isUpdatingProgress }] = useUpdateObjectiveProgressMutation();
-  // New mutation hooks
   const [approveObjectiveCompletion, { isLoading: isApprovingCompletion }] = useApproveObjectiveCompletionMutation();
   const [rejectObjectiveCompletion, { isLoading: isRejectingCompletion }] = useRejectObjectiveCompletionMutation();
 
-  // Handle error display
   useEffect(() => {
     if (isError) {
       console.error('Error fetching objectives:', error);
@@ -86,13 +81,11 @@ const ProgressTracking = () => {
     }
   }, [isError, error]);
 
-  // Normalize URL to remove double slashes
   const normalizeUrl = (url) => {
     if (!url) return null;
     return url.replace(/([^:]\/)\/+/g, '$1');
   };
 
-  // Handle accept objective (for objectives with progress < 75%)
   const handleAcceptObjective = async (objective) => {
     if (!objective._id || !objective.acceptLink) {
       toast.error('Invalid objective ID or accept link');
@@ -149,7 +142,6 @@ const ProgressTracking = () => {
     }
   };
 
-  // Handle decline objective (for objectives with progress < 75%)
   const handleDeclineObjective = async (objective) => {
     if (!objective._id || !objective.declineLink) {
       toast.error('Invalid objective ID or decline link');
@@ -206,8 +198,12 @@ const ProgressTracking = () => {
     }
   };
 
-  // Handle approve completion (for objectives with progress >= 75%)
   const handleApproveCompletion = async (objective) => {
+    if (!isAdmin) {
+      toast.error('Only admins can approve task completion');
+      return;
+    }
+
     if (!objective._id) {
       toast.error('Invalid objective ID');
       return;
@@ -234,8 +230,12 @@ const ProgressTracking = () => {
     }
   };
 
-  // Handle reject completion (for objectives with progress >= 75%)
   const handleRejectCompletion = async (objective) => {
+    if (!isAdmin) {
+      toast.error('Only admins can reject task completion');
+      return;
+    }
+
     if (!objective._id) {
       toast.error('Invalid objective ID');
       return;
@@ -262,45 +262,37 @@ const ProgressTracking = () => {
     }
   };
 
-  // Handle filter button click
   const handleFilter = () => {
     setIsFilterModalOpen(true);
   };
 
-  // Handle filter modal close
   const handleCloseFilterModal = () => {
     setIsFilterModalOpen(false);
   };
 
-  // Handle Add Objectives button
   const handleAddObjectives = () => {
     console.log('Add Objectives clicked');
     navigate('/tasks');
   };
 
-  // Handle page change
   const handlePageChange = (newPage) => {
     setFilters((prev) => ({ ...prev, page: newPage }));
   };
 
-  // Handle filter input changes
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value, page: 1 }));
   };
 
-  // Apply filters
   const handleApplyFilters = () => {
     refetch();
     setIsFilterModalOpen(false);
   };
 
-  // Handle comment input change
   const handleCommentChange = (e) => {
     setCommentInput(e.target.value);
   };
 
-  // Open comment modal
   const handleOpenCommentModal = (objectiveId) => {
     if (!objectiveId || typeof objectiveId !== 'string') {
       toast.error('Invalid objective ID');
@@ -311,14 +303,12 @@ const ProgressTracking = () => {
     setIsCommentModalOpen(true);
   };
 
-  // Close comment modal
   const handleCloseCommentModal = () => {
     setIsCommentModalOpen(false);
     setSelectedObjectiveId(null);
     setCommentInput('');
   };
 
-  // Handle comment submission
   const handleAddComment = async () => {
     if (!selectedObjectiveId) {
       toast.error('No objective selected');
@@ -341,7 +331,6 @@ const ProgressTracking = () => {
     }
   };
 
-  // Open update modal and pre-fill form
   const handleOpenUpdateModal = (objective) => {
     if (!objective._id || typeof objective._id !== 'string') {
       toast.error('Invalid objective ID');
@@ -359,7 +348,6 @@ const ProgressTracking = () => {
     setIsUpdateModalOpen(true);
   };
 
-  // Close update modal
   const handleCloseUpdateModal = () => {
     setIsUpdateModalOpen(false);
     setSelectedObjectiveId(null);
@@ -373,13 +361,11 @@ const ProgressTracking = () => {
     });
   };
 
-  // Handle update form input change
   const handleUpdateFormChange = (e) => {
     const { name, value } = e.target;
     setUpdateFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle update submission
   const handleUpdateObjective = async () => {
     if (!selectedObjectiveId) {
       toast.error('No objective selected');
@@ -404,7 +390,6 @@ const ProgressTracking = () => {
     }
   };
 
-  // Toggle comment dropdown
   const toggleCommentDropdown = (objectiveId) => {
     setOpenCommentDropdowns((prev) => ({
       ...prev,
@@ -412,7 +397,6 @@ const ProgressTracking = () => {
     }));
   };
 
-  // Toggle progress dropdown
   const toggleProgressDropdown = (objectiveId) => {
     setOpenProgressDropdowns((prev) => ({
       ...prev,
@@ -420,7 +404,6 @@ const ProgressTracking = () => {
     }));
   };
 
-  // Handle progress update
   const handleUpdateProgress = async (objectiveId, progress) => {
     try {
       await updateObjectiveProgress({ id: objectiveId, progress }).unwrap();
@@ -432,7 +415,6 @@ const ProgressTracking = () => {
     }
   };
 
-  // Open task details modal
   const handleOpenTaskModal = (objective) => {
     if (!objective._id) {
       toast.error('Invalid objective ID');
@@ -440,11 +422,9 @@ const ProgressTracking = () => {
     }
     setSelectedObjective(objective);
     setIsTaskModalOpen(true);
-    // Mark objective as viewed
     setViewedObjectives((prev) => ({ ...prev, [objective._id]: true }));
   };
 
-  // Close task details modal
   const handleCloseTaskModal = () => {
     setIsTaskModalOpen(false);
     setSelectedObjective(null);
@@ -456,7 +436,7 @@ const ProgressTracking = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold text-gray-900">Progress Tracking</h1>
-          <div className="flex space-x-3">
+          <div>
             <button
               onClick={handleFilter}
               className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -466,7 +446,7 @@ const ProgressTracking = () => {
             </button>
             <button
               onClick={handleAddObjectives}
-              className="flex items-center px-4 py-2 bg-green-600 text pulverize-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Objectives
@@ -585,7 +565,7 @@ const ProgressTracking = () => {
         )}
 
         {/* Objectives List */}
-       <div className="space-y-6">
+        <div className="space-y-6">
           {isLoading ? (
             <div className="text-center text-gray-600">Loading objectives...</div>
           ) : isError ? (
@@ -601,7 +581,7 @@ const ProgressTracking = () => {
                       onClick={() => handleOpenTaskModal(objective)}
                       className="text-lg font-medium text-gray-900 leading-tight cursor-pointer hover:text-blue-600 transition-colors"
                     >
-                      {objective.title}
+                      {objective.title.substring(0, 50)}...
                     </h2>
                     <span
                       className={`ml-3 px-2 py-1 text-xs font-medium rounded-full ${
@@ -643,6 +623,8 @@ const ProgressTracking = () => {
                       </div>
                     )}
                   </div>
+                                                        <p className="text-xs text-gray-600 mb-4">{objective.assignedTo.name}</p>
+
                 </div>
                 <p className="text-gray-600 mb-6 leading-relaxed">{objective.description}</p>
                 <div className="mb-4">
@@ -721,7 +703,7 @@ const ProgressTracking = () => {
                           className={`text-sm font-medium ${
                             isActionLoading[objective._id] || isLoading || !viewedObjectives[objective._id]
                               ? 'text-gray-400 cursor-not-allowed'
-                              : 'text-red-600 hover:text yellow-800'
+                              : 'text-red-600 hover:text-red-800'
                           } transition-colors`}
                         >
                           {isActionLoading[objective._id] ? 'Declining...' : 'Decline'}
@@ -779,10 +761,9 @@ const ProgressTracking = () => {
             </button>
           </div>
         )}
-      </div>
 
-      {/* Task Details Modal */}
-     {isTaskModalOpen && selectedObjective && (
+        {/* Task Details Modal */}
+        {isTaskModalOpen && selectedObjective && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-5xl">
               <div className="flex items-center justify-between mb-4">
@@ -836,9 +817,13 @@ const ProgressTracking = () => {
                   </p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700">Created By</h4>
+                  <h4 className="text-sm font-medium text-gray-700">{isAdmin ? 'Created By' : 'Manager'}</h4>
                   <p className="text-sm text-gray-600">
-                    {selectedObjective.createdBy?.name} ({selectedObjective.createdBy?.email})
+                    {isAdmin
+                      ? `${selectedObjective.createdBy?.name} (${selectedObjective.createdBy?.email})`
+                      : user?.manager
+                        ? `${user.manager.name} (${user.manager.email})`
+                        : 'No manager assigned'}
                   </p>
                 </div>
                 <div>
@@ -910,10 +895,9 @@ const ProgressTracking = () => {
                     <p className="text-sm text-gray-600">No progress notes available.</p>
                   )}
                 </div>
-              
               </div>
               <div className="flex justify-end mt-6 space-x-3">
-                {selectedObjective.progress >= 75 && (
+                {isAdmin && selectedObjective.progress >= 75 && (
                   <>
                     <button
                       onClick={() => handleApproveCompletion(selectedObjective)}
@@ -966,146 +950,146 @@ const ProgressTracking = () => {
           </div>
         )}
 
-
-      {/* Comment Modal */}
-      {isCommentModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Add Comment</h3>
-              <button
-                onClick={handleCloseCommentModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="mb-4">
-              <input
-                type="text"
-                value={commentInput}
-                onChange={handleCommentChange}
-                placeholder="Enter your comment..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                autoFocus
-              />
-            </div>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={handleCloseCommentModal}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddComment}
-                disabled={isCommenting || !commentInput.trim()}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isCommenting || !commentInput.trim()
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {isCommenting ? 'Posting...' : 'Post Comment'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Update Modal */}
-      {isUpdateModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Update Objective</h3>
-              <button
-                onClick={handleCloseUpdateModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Title</label>
+        {/* Comment Modal */}
+        {isCommentModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Add Comment</h3>
+                <button
+                  onClick={handleCloseCommentModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="mb-4">
                 <input
                   type="text"
-                  name="title"
-                  value={updateFormData.title}
-                  onChange={handleUpdateFormChange}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter objective title"
-                  required
+                  value={commentInput}
+                  onChange={handleCommentChange}
+                  placeholder="Enter your comment..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  autoFocus
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  name="description"
-                  value={updateFormData.description}
-                  onChange={handleUpdateFormChange}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter objective description"
-                  rows="3"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Priority Level</label>
-                <select
-                  name="priorityLevel"
-                  value={updateFormData.priorityLevel}
-                  onChange={handleUpdateFormChange}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={handleCloseCommentModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
                 >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddComment}
+                  disabled={isCommenting || !commentInput.trim()}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isCommenting || !commentInput.trim()
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {isCommenting ? 'Posting...' : 'Post Comment'}
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                <input
-                  type="date"
-                  name="startDate"
-                  value={updateFormData.startDate}
-                  onChange={handleUpdateFormChange}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">End Date</label>
-                <input
-                  type="date"
-                  name="endDate"
-                  value={updateFormData.endDate}
-                  onChange={handleUpdateFormChange}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </form>
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={handleCloseUpdateModal}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateObjective}
-                disabled={isUpdating || !updateFormData.title.trim()}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isUpdating || !updateFormData.title.trim()
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {isUpdating ? 'Updating...' : 'Update Objective'}
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Update Modal */}
+        {isUpdateModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Update Objective</h3>
+                <button
+                  onClick={handleCloseUpdateModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Title</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={updateFormData.title}
+                    onChange={handleUpdateFormChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter objective title"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    name="description"
+                    value={updateFormData.description}
+                    onChange={handleUpdateFormChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter objective description"
+                    rows="3"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Priority Level</label>
+                  <select
+                    name="priorityLevel"
+                    value={updateFormData.priorityLevel}
+                    onChange={handleUpdateFormChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                  <input
+                    type="date"
+                    name="startDate"
+                    value={updateFormData.startDate}
+                    onChange={handleUpdateFormChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">End Date</label>
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={updateFormData.endDate}
+                    onChange={handleUpdateFormChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </form>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={handleCloseUpdateModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateObjective}
+                  disabled={isUpdating || !updateFormData.title.trim()}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isUpdating || !updateFormData.title.trim()
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {isUpdating ? 'Updating...' : 'Update Objective'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
