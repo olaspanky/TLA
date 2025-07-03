@@ -38,7 +38,7 @@ function Layout() {
       <div className='flex-1 overflow-y-auto pb-12'>
         <Navbar />
 
-        <div className='z-30  2xl:mt-[-100px] lg:mt-[-60px]  2xl:mx-72 mx-20 rounded-lg shadow-md'> 
+        <div className='z-30  2xl:mt-[-100px] lg:mt-[-60px]  2xl:mx-20 mx-9 rounded-lg shadow-md'> 
           <Outlet />
         </div>
       </div>
