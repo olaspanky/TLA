@@ -187,37 +187,12 @@ const PerformanceDashboard = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {metrics.map((metric, index) => (
-            <div key={index} className="bg-white rounded-lg p-6 shadow-sm border">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-sm font-medium text-gray-600">{metric.title}</h3>
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{metric.value}</div>
-                  <div className="flex items-center text-sm">
-                    <span className={`flex items-center ${
-                      metric.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      <span className="mr-1">
-                        {metric.changeType === 'increase' ? '↗' : '↘'}
-                      </span>
-                      {metric.change}
-                    </span>
-                    <span className="text-gray-500 ml-1">{metric.period}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
+       
         {/* Performance Review Exceptions Table */}
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="p-1 border-b border-gray-200">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Performance Review Exceptions</h2>
+              <h2 className="text-lg font-semibold text-gray-900 p-5">Performance Review Exceptions</h2>
             </div>
             
             {/* Table Controls */}
