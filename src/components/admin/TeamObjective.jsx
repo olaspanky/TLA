@@ -329,6 +329,8 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
     employee.user.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
+  console.log("filtered employee is", filteredEmployees)
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -530,7 +532,7 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
                         {employee.user.role || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {employee.user.department}
+                        {employee.user.department.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {employee.user.manager || 'N/A'}
