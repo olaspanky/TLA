@@ -46,6 +46,17 @@ const PerformanceDashboard = () => {
           color: dept.rating > 3 ? 'bg-blue-400' : dept.rating > 1 ? 'bg-orange-300' : 'bg-red-300'
         })) || [];
 
+  // Dynamic traffic review from API
+  const trafficReview = orgRatingLoading || orgRatingError
+    ? []
+    : orgRating?.departmentRatings
+        ?.map(dept => ({
+          department: dept.departmentName,
+          completed: dept.totalObjectives > 0 ? Math.round((dept.rating / 5) * dept.totalObjectives) : 0,
+          total: dept.totalObjectives > 0 ? dept.totalObjectives : 100, // Fallback to 100 if no objectives
+          percentage: dept.totalObjectives > 0 ? Math.round((dept.rating / 5) * 100) : 0
+        })) || [];
+
   // Hardcoded metrics (replace with API data if available)
   const metrics = [
     {
@@ -69,16 +80,6 @@ const PerformanceDashboard = () => {
       changeType: 'decrease',
       period: 'decrease vs last quarter'
     }
-  ];
-
-  // Hardcoded traffic review (replace with API data if available)
-  const trafficReview = [
-    { department: 'Consulting & Development', completed: 76, total: 100, percentage: 76 },
-    { department: 'Growth', completed: 84, total: 100, percentage: 84 },
-    { department: 'Human Resource', completed: 78, total: 100, percentage: 78 },
-    { department: 'Partnership', completed: 45, total: 100, percentage: 45 },
-    { department: 'Finance', completed: 55, total: 100, percentage: 55 },
-    { department: 'Marketing', completed: 47, total: 100, percentage: 47 }
   ];
 
   const {
@@ -295,27 +296,35 @@ const PerformanceDashboard = () => {
               <h3 className="text-lg font-semibold text-gray-900">Traffic Review</h3>
             </div>
             <div className="p-6">
-              <div className="space-y-4">
-                {trafficReview.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-medium text-gray-700">{item.department}</span>
-                        <span className="text-sm text-gray-500">{item.percentage}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full" 
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {item.completed}/{item.total} Completed
+              {orgRatingLoading ? (
+                <div className="text-center text-gray-600">Loading...</div>
+              ) : orgRatingError ? (
+                <div className="text-center text-red-600">Error loading traffic data</div>
+              ) : trafficReview.length === 0 ? (
+                <div className="text-center text-gray-600">No traffic data available</div>
+              ) : (
+                <div className="space-y-4">
+                  {trafficReview.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-medium text-gray-700">{item.department}</span>
+                          <span className="text-sm text-gray-500">{item.percentage}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${item.percentage}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {item.completed}/{item.total} Completed
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
