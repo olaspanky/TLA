@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Search, ChevronDown, Filter, ArrowUpDown, Eye, Calendar, X, Plus, MoreHorizontal, Edit, Trash2, ArrowDown } from 'lucide-react';
+import { Search, ChevronDown, Filter, ArrowUpDown, Eye, Calendar, X, Plus, MoreHorizontal, Edit, Trash2, ArrowDown, ArrowUp } from 'lucide-react';
 import { 
   useGetObjectivesQuery,
   useCreateObjectiveMutation,
@@ -9,49 +9,69 @@ import {
   useRejectObjectiveCompletionMutation,
   useGetUpcomingObjectivesQuery,
   useDeleteObjectiveMutation
-} from '../redux/slices/api/objectiveApiSlice'; // Adjust the import path as needed
+} from '../redux/slices/api/objectiveApiSlice';
+import { useGetOrganizationRatingQuery } from '../redux/slices/api/analyticsApiSlice';
 
 const PerformanceDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
-    const [currentQuarter, setCurrentQuarter] = useState('Q2-2025'); // Default to Q2-2025
-    const { user } = useSelector((state) => state.auth);
-
+  const [currentQuarter, setCurrentQuarter] = useState('Q2-2025');
+  const { user } = useSelector((state) => state.auth);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Fetch organization rating
+  const {
+    data: orgRating,
+    isLoading: orgRatingLoading,
+    isError: orgRatingError
+  } = useGetOrganizationRatingQuery();
+
+  // Calculate performance score from organization rating (1-5 scale)
+  const performanceScore = orgRatingLoading
+    ? 0
+    : orgRatingError
+    ? 0
+    : orgRating?.rating
+    ? orgRating.rating.toFixed(1)
+    : 3.7; // Fallback to static value if no data
+
+  // Dynamic department performance from API
+  const departmentPerformance = orgRatingLoading || orgRatingError
+    ? []
+    : orgRating?.departmentRatings
+        ?.filter(dept => dept.totalUsers > 0 || dept.totalObjectives > 0)
+        ?.map(dept => ({
+          name: dept.departmentName,
+          score: dept.rating,
+          color: dept.rating > 3 ? 'bg-blue-400' : dept.rating > 1 ? 'bg-orange-300' : 'bg-red-300'
+        })) || [];
+
+  // Hardcoded metrics (replace with API data if available)
   const metrics = [
     {
       title: 'Overall Performance Score',
-      value: '3.7/5.0',
+      value: orgRatingLoading ? 'Loading...' : orgRatingError ? 'Error' : `${performanceScore}/5.0`,
       change: '0.3%',
       changeType: 'increase',
       period: 'increase vs last quarter'
     },
     {
       title: 'Review Completion Rate',
-      value: '87%',
+      value: '87%', // Replace with performanceReview.completionRate if available
       change: '12%',
       changeType: 'increase',
       period: 'increase vs last quarter'
     },
     {
       title: 'High Performance Retention',
-      value: '92%',
+      value: '92%', // Replace with performanceReview.retentionRate if available
       change: '3%',
       changeType: 'decrease',
       period: 'decrease vs last quarter'
     }
   ];
 
-  const departmentPerformance = [
-    { name: 'Consulting & Development', score: 4.2, color: 'bg-blue-400' },
-    { name: 'Growth', score: 3.8, color: 'bg-green-400' },
-    { name: 'HR', score: 3.5, color: 'bg-orange-300' },
-    { name: 'Partnership', score: 2.9, color: 'bg-red-300' },
-    { name: 'Finance', score: 3.7, color: 'bg-blue-300' },
-    { name: 'Marketing', score: 4.0, color: 'bg-green-300' }
-  ];
-
+  // Hardcoded traffic review (replace with API data if available)
   const trafficReview = [
     { department: 'Consulting & Development', completed: 76, total: 100, percentage: 76 },
     { department: 'Growth', completed: 84, total: 100, percentage: 84 },
@@ -61,74 +81,42 @@ const PerformanceDashboard = () => {
     { department: 'Marketing', completed: 47, total: 100, percentage: 47 }
   ];
 
-  const employees = [
-    {
-      id: 1,
-      name: 'Ayodej Alaran',
-      role: 'Chief Executive Officer',
-      department: 'General',
-      manager: 'Ayodej Alaran',
-      dueDate: 'Just now',
-      dueDateFormatted: 'July 25, 2025',
-      status: 'Completed',
-      avatar: '👨‍💼'
-    },
-    {
-      id: 2,
-      name: 'Owolola Thompson',
-      role: 'Global Human Resource',
-      department: 'Human Resource',
-      manager: 'Ayodej Alaran',
-      dueDate: 'A minute ago',
-      dueDateFormatted: 'July 25, 2025',
-      status: 'In Progress',
-      avatar: '👩‍💼'
-    },
-    {
-      id: 3,
-      name: 'Adeoye Sobande',
-      role: 'Chief Product Officer',
-      department: 'Consulting & Development',
-      manager: 'Ayodej Alaran',
-      dueDate: '1 hour ago',
-      dueDateFormatted: 'July 24, 2025',
-      status: 'Completed',
-      avatar: '👨‍💻'
-    },
-    {
-      id: 4,
-      name: 'Adesola Arowolo',
-      role: 'Chief Growth Officer',
-      department: 'Growth',
-      manager: 'Ayodej Alaran',
-      dueDate: 'Yesterday',
-      dueDateFormatted: 'July 24, 2025',
-      status: 'In Progress',
-      avatar: '👩‍💻'
-    },
-    {
-      id: 5,
-      name: 'Julie Wole-Ajyi',
-      role: 'Head of Marketing',
-      department: 'Marketing',
-      manager: 'Ayodej Alaran',
-      dueDate: 'May 2, 2025',
-      dueDateFormatted: 'May 2, 2025',
-      status: 'Overdue',
-      avatar: '👩‍🎨'
-    },
-    {
-      id: 6,
-      name: 'Lanre Awolokun',
-      role: 'Growth Manager',
-      department: 'Growth',
-      manager: 'Adesola Arowolo',
-      dueDate: 'Just now',
-      dueDateFormatted: 'July 25, 2025',
-      status: 'In Progress',
-      avatar: '👨‍📊'
-    }
-  ];
+  const {
+    data: objectives = [],
+    isLoading: objectivesLoading,
+    isError: objectivesError,
+    refetch: refetchObjectives
+  } = useGetObjectivesQuery();
+
+  const {
+    data: performanceReview = {},
+    isLoading: reviewLoading,
+    isError: reviewError
+  } = useGetPerformanceReviewQuery(currentQuarter);
+
+  const {
+    data: upcomingObjectives = [],
+    isLoading: upcomingLoading,
+    isError: upcomingError
+  } = useGetUpcomingObjectivesQuery(7);
+
+  // Mutation hooks
+  const [createObjective] = useCreateObjectiveMutation();
+  const [approveObjective] = useApproveObjectiveCompletionMutation();
+  const [rejectObjective] = useRejectObjectiveCompletionMutation();
+  const [deleteObjective] = useDeleteObjectiveMutation();
+
+  // Available quarters for dropdown
+  const quarters = ['Q1-2025', 'Q2-2025', 'Q3-2025', 'Q4-2025', 'Q1-2024', 'Q2-2024', 'Q3-2024', 'Q4-2024'];
+
+  const getAvatarColor = (name) => {
+    const colors = [
+      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 
+      'bg-orange-500', 'bg-pink-500', 'bg-indigo-500',
+      'bg-red-500', 'bg-yellow-500', 'bg-teal-500'
+    ];
+    return name ? colors[name.length % colors.length] : 'bg-gray-500';
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -146,45 +134,6 @@ const PerformanceDashboard = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
-   const {
-    data: objectives = [],
-    isLoading: objectivesLoading,
-    isError: objectivesError,
-    refetch: refetchObjectives
-  } = useGetObjectivesQuery();
-
-  const {
-    data: performanceReview = {},
-    isLoading: reviewLoading,
-    isError: reviewError
-  } = useGetPerformanceReviewQuery(currentQuarter);
-
-  const {
-    data: upcomingObjectives = [],
-    isLoading: upcomingLoading,
-    isError: upcomingError
-  } = useGetUpcomingObjectivesQuery(7); // Default to 7 days
-
-  // Mutation hooks
-  const [createObjective] = useCreateObjectiveMutation();
-  const [approveObjective] = useApproveObjectiveCompletionMutation();
-  const [rejectObjective] = useRejectObjectiveCompletionMutation();
-  const [deleteObjective] = useDeleteObjectiveMutation();
-
-  // Available quarters for dropdown
-  const quarters = ['Q1-2025', 'Q2-2025', 'Q3-2025', 'Q4-2025', 'Q1-2024', 'Q2-2024', 'Q3-2024', 'Q4-2024'];
-
-  const getAvatarColor = (name) => {
-    const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 
-      'bg-orange-500', 'bg-pink-500', 'bg-indigo-500',
-      'bg-red-500', 'bg-yellow-500', 'bg-teal-500'
-    ];
-    return colors[name.length % colors.length];
-  };
-
-
 
   const handleAddObjective = async () => {
     try {
@@ -228,17 +177,13 @@ const PerformanceDashboard = () => {
   }));
 
   // Get performance metrics from review data
-  const performanceScore = performanceReview.averageScore || 3.7;
   const completionRate = performanceReview.completionRate || 87;
   const retentionRate = performanceReview.retentionRate || 92;
 
   // Filter employees by search term
   const filteredEmployees = performanceReview.performanceReviews?.filter(employee =>
-    employee.user.name.toLowerCase().includes(searchTerm.toLowerCase())
+    employee.user?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
-
-  console.log("filtered emp is", filteredEmployees)
-  console.log("filtered user is", user)
 
   const handleRowClick = (employee) => {
     setSelectedEmployee(employee);
@@ -254,6 +199,9 @@ const PerformanceDashboard = () => {
     console.log('Submitting employee data:', selectedEmployee);
     handleCloseModal();
   };
+
+  // Performance rating chart data (use org rating for current quarter)
+  const performanceRatingData = [85, 78, 92, 88, 85, orgRating?.rating * 20 || 90]; // Scale 1-5 to 0-100 for chart
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -273,7 +221,7 @@ const PerformanceDashboard = () => {
                       metric.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
                     }`}>
                       <span className="mr-1">
-                        {metric.changeType === 'increase' ? '↗' : '↘'}
+                        {metric.changeType === 'increase' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
                       </span>
                       {metric.change}
                     </span>
@@ -289,19 +237,27 @@ const PerformanceDashboard = () => {
         <div className="bg-white rounded-lg shadow-sm border mb-8">
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-gray-900">Department performance</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Department Performance</h2>
               <button className="text-sm text-blue-600 hover:text-blue-800">Create a chart</button>
             </div>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {departmentPerformance.map((dept, index) => (
-                <div key={index} className={`${dept.color} rounded-lg p-4 text-center`}>
-                  <div className="text-white text-xs font-medium mb-2">{dept.name}</div>
-                  <div className="text-white text-2xl font-bold">{dept.score}</div>
-                </div>
-              ))}
-            </div>
+            {orgRatingLoading ? (
+              <div className="text-center text-gray-600">Loading...</div>
+            ) : orgRatingError ? (
+              <div className="text-center text-red-600">Error loading department data</div>
+            ) : departmentPerformance.length === 0 ? (
+              <div className="text-center text-gray-600">No department data available</div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {departmentPerformance.map((dept, index) => (
+                  <div key={index} className={`${dept.color} rounded-lg p-4 text-center`}>
+                    <div className="text-white text-xs font-medium mb-2">{dept.name}</div>
+                    <div className="text-white text-2xl font-bold">{dept.score.toFixed(1)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -314,7 +270,7 @@ const PerformanceDashboard = () => {
             </div>
             <div className="p-6">
               <div className="flex items-end justify-between h-40">
-                {[85, 78, 92, 88, 85, 90].map((height, index) => (
+                {performanceRatingData.map((height, index) => (
                   <div key={index} className="flex flex-col items-center">
                     <div 
                       className="bg-green-500 rounded-t-sm mb-2 w-8"
@@ -327,7 +283,7 @@ const PerformanceDashboard = () => {
               <div className="mt-4 flex items-center justify-center">
                 <div className="flex items-center">
                   <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-sm text-gray-600">2024-25: 545.3k</span>
+                  <span className="text-sm text-gray-600">2024-25: {orgRating?.rating?.toFixed(1) || '2.4'}</span>
                 </div>
               </div>
             </div>
@@ -364,238 +320,156 @@ const PerformanceDashboard = () => {
           </div>
         </div>
 
-        {/* Performance Review Exceptions Table */}
-         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                 <div className="p-6 border-b border-gray-200">
-                   <div className="flex items-center justify-between">
-                     <h3 className="text-lg font-semibold text-gray-900">Performance Review Exceptions</h3>
-                     <div className="flex items-center gap-3">
-                       <select
-                         value={currentQuarter}
-                         onChange={(e) => setCurrentQuarter(e.target.value)}
-                         className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       >
-                         {quarters.map((q) => (
-                           <option key={q} value={q}>{q}</option>
-                         ))}
-                       </select>
-                       <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                         <Filter size={16} />
-                         <span className="text-sm">Filter</span>
-                       </button>
-                       <button 
-                         onClick={handleAddObjective}
-                         className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                       >
-                         <Plus size={16} />
-                         <span className="text-sm">Add Objectives</span>
-                       </button>
-                     </div>
-                   </div>
-                 </div>
-       
-                 {/* Table Controls */}
-                 <div className="p-4 border-b border-gray-100 flex items-center gap-4">
-                   <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                     <Plus size={16} className="text-gray-600" />
-                   </button>
-                   <div className="flex items-center gap-2">
-                     <Filter size={16} className="text-gray-600" />
-                     <MoreHorizontal size={16} className="text-gray-600" />
-                   </div>
-                   <div className="flex-1">
-                     <input
-                       type="text"
-                       placeholder="Search by employee name..."
-                       value={searchTerm}
-                       onChange={(e) => setSearchTerm(e.target.value)}
-                       className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                     />
-                   </div>
-                 </div>
-       
-                 {/* Table */}
-                 <div className="overflow-x-auto">
-                   <table className="w-full">
-                     <thead className="bg-gray-50">
-                       <tr>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review</th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                       </tr>
-                     </thead>
-                     <tbody className="bg-white divide-y divide-gray-100">
-                       {reviewLoading ? (
-                         <tr>
-                           <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-600">Loading...</td>
-                         </tr>
-                       ) : reviewError ? (
-                         <tr>
-                           <td colSpan={7} className="px-6 py-4 text-center text-sm text-red-600">
-                             Error loading performance reviews{reviewError.status === 401 ? ': Please log in again' : ''}
-                           </td>
-                         </tr>
-                       ) : filteredEmployees.length === 0 ? (
-                         <tr>
-                           <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-600">No employees found</td>
-                         </tr>
-                       ) : (
-                         filteredEmployees.map((employee) => (
-                           <tr key={employee.user._id} className="hover:bg-gray-50">
-                             <td className="px-6 py-4 whitespace-nowrap">
-                               <div className="flex items-center gap-3">
-                                 <div className={`w-8 h-8 rounded-full ${getAvatarColor(employee.user.name)} flex items-center justify-center text-white text-xs font-medium`}>
-                                   {employee.user.name.slice(0, 2).toUpperCase()}
-                                 </div>
-                                 <span className="text-sm font-medium text-gray-900">{employee.user.name}</span>
-                               </div>
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                               {employee.user.role || 'N/A'}
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                               {employee.user.department}
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                               {employee.user.manager || 'N/A'}
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap">
-                               <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(employee.performanceStatus)}`}>
-                                 {employee.performanceStatus}
-                               </span>
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                               {new Date(performanceReview.endDate).toLocaleDateString()}
-                             </td>
-                             <td className="px-6 py-4 whitespace-nowrap">
-                               <div className="flex items-center gap-2">
-                                 <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-                                   <Edit size={14} className="text-gray-600" />
-                                 </button>
-                                 <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-                                   <Eye size={14} className="text-gray-600" />
-                                 </button>
-                                 <button 
-                                   onClick={() => handleDelete(employee.user._id)}
-                                   className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                 >
-                                   <Trash2 size={14} className="text-gray-600" />
-                                 </button>
-                               </div>
-                             </td>
-                           </tr>
-                         ))
-                       )}
-                     </tbody>
-                   </table>
-                 </div>
-               </div>
-
-        {/* Employee Details Modal */}
-        {isModalOpen && selectedEmployee && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Employee Details</h2>
-                <button
-                  onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-600"
+        {/* Performance Review Table */}
+        <div className="bg-white rounded-lg shadow-sm border">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Performance Review</h3>
+              <div className="flex items-center gap-3">
+                <select
+                  value={currentQuarter}
+                  onChange={(e) => setCurrentQuarter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <X className="w-6 h-6" />
+                  {quarters.map((q) => (
+                    <option key={q} value={q}>{q}</option>
+                  ))}
+                </select>
+                <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Filter size={16} />
+                  <span className="text-sm">Filter</span>
+                </button>
+                <button 
+                  onClick={handleAddObjective}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Plus size={16} />
+                  <span className="text-sm">Add Objectives</span>
                 </button>
               </div>
+            </div>
+          </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-4 border-b border-gray-100 flex items-center gap-4">
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <Plus size={16} className="text-gray-600" />
+            </button>
+            <div className="flex items-center gap-2">
+              <Filter size={16} className="text-gray-600" />
+              <MoreHorizontal size={16} className="text-gray-600" />
+            </div>
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Search by employee name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {reviewLoading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-600">Loading...</td>
+                  </tr>
+                ) : reviewError ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-red-600">
+                      Error loading performance reviews{reviewError.status === 401 ? ': Please log in again' : ''}
+                    </td>
+                  </tr>
+                ) : filteredEmployees.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-600">No employees found</td>
+                  </tr>
+                ) : (
+                  filteredEmployees.map((employee) => (
+                    <tr key={employee.user._id} className="hover:bg-gray-50" onClick={() => handleRowClick(employee)}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full ${getAvatarColor(employee.user.name)} flex items-center justify-center text-white text-xs font-medium`}>
+                            {employee.user.name?.slice(0, 2).toUpperCase() || 'N/A'}
+                          </div>
+                          <span className="text-sm font-medium text-gray-900">{employee.user.name || 'Unknown'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {employee.user.role || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {employee.user.department?.name || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {employee.user.reportingTo?.length > 0 ? employee.user.reportingTo[0].name : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(employee.performanceStatus)}`}>
+                          {employee.performanceStatus || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {performanceReview.endDate ? new Date(performanceReview.endDate).toLocaleDateString() : 'N/A'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Modal for Employee Details */}
+        {isModalOpen && selectedEmployee && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Employee Details</h3>
+                <button onClick={handleCloseModal}>
+                  <X size={20} className="text-gray-600" />
+                </button>
+              </div>
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Employee name
-                  </label>
-                  <div className="relative">
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none">
-                      <option>{selectedEmployee.name}</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  </div>
+                  <label className="text-sm font-medium text-gray-600">Name</label>
+                  <p className="text-gray-900">{selectedEmployee.user.name || 'N/A'}</p>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Role
-                  </label>
-                  <div className="relative">
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none">
-                      <option>{selectedEmployee.role}</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  </div>
+                  <label className="text-sm font-medium text-gray-600">Role</label>
+                  <p className="text-gray-900">{selectedEmployee.user.role || 'N/A'}</p>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Department
-                  </label>
-                  <div className="relative">
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none">
-                      <option>{selectedEmployee.department}</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  </div>
+                  <label className="text-sm font-medium text-gray-600">Department</label>
+                  <p className="text-gray-900">{selectedEmployee.user.department?.name || 'N/A'}</p>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Manager
-                  </label>
-                  <div className="relative">
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none">
-                      <option>{selectedEmployee.manager}</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Due Date
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={selectedEmployee.dueDateFormatted}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      readOnly
-                    />
-                    <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <div className="relative">
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none">
-                      <option>{selectedEmployee.status}</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  </div>
+                  <label className="text-sm font-medium text-gray-600">Performance Status</label>
+                  <p className="text-gray-900">{selectedEmployee.performanceStatus || 'N/A'}</p>
                 </div>
               </div>
-
-              <div className="flex justify-end space-x-4 mt-8">
+              <div className="mt-6 flex justify-end gap-3">
                 <button
                   onClick={handleCloseModal}
-                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Back
+                  Cancel
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   Submit
                 </button>

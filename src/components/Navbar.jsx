@@ -39,7 +39,7 @@ const superAdminLinks = [
   { label: "User Management", link: "sadmin1", icon: <MdTaskAlt /> },
   { label: "Progress Tracking", link: "progress", icon: <MdOutlinePendingActions /> },
   { label: "Development plan", link: "sadmin3", icon: <MdTaskAlt /> },
-  { label: "Admin", link: "admin", icon: <MdTaskAlt /> },
+  { label: " Deparments", link: "admin", icon: <MdTaskAlt /> },
 
 ];
 

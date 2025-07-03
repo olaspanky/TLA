@@ -1,10 +1,6 @@
-
 import React, { useState } from 'react';
-import { Filter, Plus, MoreHorizontal, Edit, Trash2, Eye, ArrowUp, ArrowDown } from 'lucide-react';
+import { Filter, Plus, MoreHorizontal, Edit, Trash2, Eye, ArrowUp, ArrowDown, X, ExternalLink } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { X, ExternalLink } from 'lucide-react';
-
-
 import { 
   useGetObjectivesQuery,
   useCreateObjectiveMutation,
@@ -12,11 +8,11 @@ import {
   useApproveObjectiveCompletionMutation,
   useRejectObjectiveCompletionMutation,
   useGetUpcomingObjectivesQuery,
-  useDeleteObjectiveMutation
-} from '../../redux/slices/api/objectiveApiSlice'; // Adjust the import path as needed
+  useDeleteObjectiveMutation,
+} from '../../redux/slices/api/objectiveApiSlice';
+import { useGetDepartmentRatingQuery } from '../../redux/slices/api/analyticsApiSlice'; // Import the department rating hook
 
-// Modal Component
-// Modal Component
+// ObjectiveModal Component (unchanged for brevity, same as provided)
 const ObjectiveModal = ({ isOpen, onClose, objective }) => {
   const [selectedRating, setSelectedRating] = useState('75%');
   const [assignedTo, setAssignedTo] = useState(objective?.assignedTo);
@@ -35,7 +31,7 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
       })
     : 'Not specified';
 
-  // Calculate progress - use direct progress if available, otherwise calculate from subObjectives
+  // Calculate progress
   const progressValue =
     objective.progress !== undefined
       ? objective.progress
@@ -61,7 +57,7 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
   };
 
   const getStatusText = (completed) => {
-    return completed ? 'Done' : '50%'; // Using percentage for incomplete items as shown in Figma
+    return completed ? 'Done' : '50%';
   };
 
   return (
@@ -110,34 +106,31 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
           <h3 className="text-base font-medium text-gray-900 mb-4">Lead Objectives</h3>
           {objective.subObjectives && objective.subObjectives.length > 0 ? (
             <div className="space-y-3">
-              {objective.subObjectives.map((subObj, index) => {
-                console.log('subObjective:', subObj); // Debug log
-                return (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={subObj.completed || false}
-                        className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                        onChange={() => {}}
-                      />
-                      <span
-                        className={`text-sm ${
-                          subObj.completed ? 'line-through text-gray-500' : 'text-gray-900'
-                        }`}
-                      >
-                        {subObj.title || 'Untitled task'}
-                      </span>
-                    </div>
-                    <span className={getStatusBadge(subObj.completed)}>
-                      {getStatusText(subObj.completed)}
+              {objective.subObjectives.map((subObj, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={subObj.completed || false}
+                      className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                      onChange={() => {}}
+                    />
+                    <span
+                      className={`text-sm ${
+                        subObj.completed ? 'line-through text-gray-500' : 'text-gray-900'
+                      }`}
+                    >
+                      {subObj.title || 'Untitled task'}
                     </span>
                   </div>
-                );
-              })}
+                  <span className={getStatusBadge(subObj.completed)}>
+                    {getStatusText(subObj.completed)}
+                  </span>
+                </div>
+              ))}
             </div>
           ) : (
             <p className="text-sm text-gray-500">No key results defined for this objective</p>
@@ -148,7 +141,6 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
         <div className="p-6 border-t border-gray-200 bg-white">
           <div className="flex justify-between items-end">
             <div className="flex gap-8">
-              {/* Assigned to */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Assigned to</label>
                 <input
@@ -159,7 +151,6 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
                 />
               </div>
               
-              {/* Ratings */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Ratings</label>
                 <select
@@ -177,7 +168,6 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
               </div>
             </div>
             
-            {/* Action Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={onClose}
@@ -223,8 +213,17 @@ const ComprehensivePerformanceDashboard = () => {
     isError: upcomingError
   } = useGetUpcomingObjectivesQuery(7);
 
-  // Log the upcoming objectives data
+  // Fetch department rating for Development and Tech (ID: 68581c5e5e0f68e44a3f6d74)
+  const {
+    data: departmentRating,
+    isLoading: deptRatingLoading,
+    isError: deptRatingError
+  } = useGetDepartmentRatingQuery('68581c5e5e0f68e44a3f6d74');
+
+  // Log data for debugging
+  console.log("Performance Review:", performanceReview);
   console.log("Upcoming Objectives Data:", upcomingObjectives);
+  console.log("Department Rating:", departmentRating);
 
   // Mutation hooks
   const [createObjective] = useCreateObjectiveMutation();
@@ -290,7 +289,6 @@ const ComprehensivePerformanceDashboard = () => {
     }
   };
 
-  // Handle opening the modal with the selected objective
   const handleOpenModal = (objective) => {
     setSelectedObjective(objective);
     setIsModalOpen(true);
@@ -302,34 +300,39 @@ const ComprehensivePerformanceDashboard = () => {
   };
 
   // Format upcoming objectives for display
-  // Format upcoming objectives for display
-// Format upcoming objectives for display
-const formattedDeadlines = upcomingObjectives.map((obj) => ({
-  id: obj._id,
-  title: obj.title,
-  description: obj.description,
-  subObjectives: obj.subObjectives || [],
-  priorityLevel: obj.priorityLevel,
-  startDate: obj.startDate,
-  endDate: obj.endDate,
-  progress: obj.progress,
-  assignedTo: obj.assignedTo?.name, // Include the full assignedTo object
-  assignedToName: obj.assignedTo?.name || 'Unassigned', // Extract the name
-  lastUpdated: `Last updated: ${new Date(obj.updatedAt).toLocaleDateString()}`,
-  updatedAt: obj.updatedAt
-}));
+  const formattedDeadlines = upcomingObjectives.map((obj) => ({
+    id: obj._id,
+    title: obj.title,
+    description: obj.description,
+    subObjectives: obj.subObjectives || [],
+    priorityLevel: obj.priorityLevel,
+    startDate: obj.startDate,
+    endDate: obj.endDate,
+    progress: obj.progress,
+    assignedTo: obj.assignedTo?.name,
+    assignedToName: obj.assignedTo?.name || 'Unassigned',
+    lastUpdated: `Last updated: ${new Date(obj.updatedAt).toLocaleDateString()}`,
+    updatedAt: obj.updatedAt
+  }));
 
-  // Get performance metrics from review data
-  const performanceScore = performanceReview.averageScore || 3.7;
-  const completionRate = performanceReview.completionRate || 87;
-  const retentionRate = performanceReview.retentionRate || 92;
+  // Use department rating for performance score, scaled to /5.0 if necessary
+  const performanceScore = deptRatingLoading
+    ? 0
+    : deptRatingError
+    ? 0
+    : departmentRating?.averageRating
+    ? (departmentRating.averageRating / 20).toFixed(1) // Scale 0-100 to 0-5
+    : 0;
+
+  const completionRate = performanceReview.completionRate || 0;
+  const retentionRate = performanceReview.retentionRate || 0;
 
   // Filter employees by search term
   const filteredEmployees = performanceReview.performanceReviews?.filter(employee =>
     employee.user.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  console.log("filtered employee is", filteredEmployees)
+  console.log("Filtered Employees:", filteredEmployees);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -339,8 +342,16 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h3 className="text-sm font-medium text-gray-600 mb-2">Overall Performance Score</h3>
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-gray-900">{performanceScore.toFixed(1)}</span>
-              <span className="text-xl text-gray-500">/5.0</span>
+              {deptRatingLoading ? (
+                <span className="text-3xl font-bold text-gray-900">Loading...</span>
+              ) : deptRatingError ? (
+                <span className="text-3xl font-bold text-red-600">Error</span>
+              ) : (
+                <>
+                  <span className="text-3xl font-bold text-gray-900">{performanceScore}</span>
+                  <span className="text-xl text-gray-500">/5.0</span>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-1 mt-2">
               <ArrowUp size={12} className="text-green-500" />
@@ -368,7 +379,7 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Progress tracking</h3>
+            <h3 className="text-lg font-semibold text-gray-900-4">Progress tracking</h3>
             <div className="flex items-center justify-center mb-4">
               <div className="relative w-32 h-32">
                 <svg className="w-32 h-32 transform -rotate-90">
@@ -389,7 +400,7 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
                     strokeWidth="8"
                     fill="none"
                     strokeDasharray={`${2 * Math.PI * 56}`}
-                    strokeDashoffset={`${2 * Math.PI * 56 * (1 - 0.75)}`}
+                    strokeDashoffset={`${2 * Math.PI * 56 * (1 - (performanceScore / 5))}`} // Update to use performanceScore
                     className="text-green-500 transition-all duration-300"
                     strokeLinecap="round"
                   />
@@ -407,7 +418,7 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-900">75/100</span>
+                  <span className="text-2xl font-bold text-gray-900">{Math.round(performanceScore * 20)}/100</span>
                 </div>
               </div>
             </div>
@@ -440,7 +451,7 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
 
         {/* Performance Review Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-gray200">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Performance Review</h3>
               <div className="flex items-center gap-3">
@@ -499,7 +510,6 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manager</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
@@ -535,7 +545,7 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
                         {employee.user.department.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {employee.user.manager || 'N/A'}
+                        {employee.user.reportingTo.length > 0 ? employee.user.reportingTo[0].name : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(employee.performanceStatus)}`}>
@@ -544,22 +554,6 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {new Date(performanceReview.endDate).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-                            <Edit size={14} className="text-gray-600" />
-                          </button>
-                          <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-                            <Eye size={14} className="text-gray-600" />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(employee.user._id)}
-                            className="p-1 hover:bg-gray-100 rounded transition-colors"
-                          >
-                            <Trash2 size={14} className="text-gray-600" />
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))
@@ -570,7 +564,6 @@ const formattedDeadlines = upcomingObjectives.map((obj) => ({
         </div>
       </div>
 
-      {/* Modal for Objective Details */}
       <ObjectiveModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}

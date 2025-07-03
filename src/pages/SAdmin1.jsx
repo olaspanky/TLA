@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Edit, ChevronDown, Filter, ArrowUpDown, Calendar, X } from 'lucide-react';
+import Admin3 from "../components/admin/Adminuser"
 
 const PerformanceDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -214,245 +215,25 @@ const PerformanceDashboard = () => {
 
         {/* Performance Review Exceptions Table */}
         <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-1 border-b border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Performance Review Exceptions</h2>
             </div>
             
             {/* Table Controls */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <button className="flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
-                  <Filter className="w-4 h-4 mr-2" />
-                </button>
-                <button className="flex items-center px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
-                  <ArrowUpDown className="w-4 h-4 mr-2" />
-                </button>
-              </div>
-              
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-              </div>
-            </div>
+            <Admin3 />
+          
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Employee
-                  </th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Department
-                  </th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Manager
-                  </th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Due Date
-                  </th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Review Status
-                  </th>
-                  <th className="text-left py-3 px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredEmployees.map((employee) => (
-                  <tr 
-                    key={employee.id} 
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleRowClick(employee)}
-                  >
-                    <td className="py-4 px-6">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm mr-3">
-                          {employee.avatar}
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">{employee.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-700">{employee.role}</td>
-                    <td className="py-4 px-6 text-sm text-gray-700">{employee.department}</td>
-                    <td className="py-4 px-6 text-sm text-gray-700">{employee.manager}</td>
-                    <td className="py-4 px-6 text-sm text-gray-700">{employee.dueDate}</td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(employee.status)}`}>
-                        <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{
-                          backgroundColor: employee.status === 'Completed' ? '#10b981' :
-                                         employee.status === 'In Progress' ? '#3b82f6' :
-                                         employee.status === 'Overdue' ? '#ef4444' :
-                                         employee.status === 'Pending' ? '#f59e0b' :
-                                         employee.status === 'Approved' ? '#8b5cf6' : '#6b7280'
-                        }}></span>
-                        {employee.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <button 
-                        className="text-gray-400 hover:text-gray-600"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRowClick(employee);
-                        }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+         
 
           {/* Pagination */}
-          <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-                  &lt; Button
-                </button>
-                <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded">2</button>
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">3</button>
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">4</button>
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">5</button>
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-                  &gt;
-                </button>
-              </div>
-            </div>
-          </div>
+         
         </div>
 
         {/* Employee Details Modal */}
-        {isModalOpen && selectedEmployee && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Employee Details</h2>
-                <button
-                  onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Employee Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Employee name
-                  </label>
-                  <div className="relative">
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none">
-                      <option>{selectedEmployee.name}</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  </div>
-                </div>
-
-                {/* Role */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Role
-                  </label>
-                  <div className="relative">
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none">
-                      <option>{selectedEmployee.role}</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  </div>
-                </div>
-
-                {/* Department */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Department
-                  </label>
-                  <div className="relative">
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none">
-                      <option>{selectedEmployee.department}</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  </div>
-                </div>
-
-                {/* Manager */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Manager
-                  </label>
-                  <div className="relative">
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none">
-                      <option>{selectedEmployee.manager}</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  </div>
-                </div>
-
-                {/* Due Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Due Date
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={selectedEmployee.dueDateFormatted}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      readOnly
-                    />
-                    <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <div className="relative">
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none">
-                      <option>{selectedEmployee.status}</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 mt-8">
-                <button
-                  onClick={handleCloseModal}
-                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  Submit
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+      
       </div>
     </div>
   );
