@@ -25,10 +25,14 @@ import {
 } from '../redux/slices/api/objectiveApiSlice';
 import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
+import { selectCurrentUser } from '../redux/slices/authSlice';
 
 const ProgressTracking = () => {
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
   const isAdmin = user?.role === 'admin'; // Check if user is an admin
   const [isActionLoading, setIsActionLoading] = useState({});
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -432,7 +436,7 @@ const ProgressTracking = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 rounded-lg">
-      <div className="max-w-7xl mx-auto">
+      <div className="">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold text-gray-900">Progress Tracking</h1>

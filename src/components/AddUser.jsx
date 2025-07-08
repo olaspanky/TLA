@@ -10,11 +10,14 @@ import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { useRegisterMutation } from "../redux/slices/api/authApiSlice";
 import { useUpdateUserMutation } from "../redux/slices/api/userApiSlice";
-
+import { selectCurrentUser } from "../redux/slices/authSlice";
 
 const AddUser = ({ open, setOpen, userData }) => {
   let defaultValues = userData ?? {};
-  const { user } = useSelector((state) => state.auth);
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
 
 
   const {

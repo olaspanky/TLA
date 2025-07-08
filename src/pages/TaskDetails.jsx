@@ -26,13 +26,17 @@ import {
   BackIcon,
 } from "../components/Icon";
 import { useNavigate } from "react-router-dom";
+import selectCurrentUser from "../redux/slices/authSlice";
 
 const TABS = [{ title: "Activities/Timeline", icon: <FaTasks /> }];
 
 const TaskDetails = () => {
   const { id } = useParams();
   const { data, isLoading } = useGetSingleTaskQuery(id);
-  const { user } = useSelector((state) => state.auth);
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
   const [state, setState] = useState({
     selectedTab: 0,
     expandedSubTask: null,

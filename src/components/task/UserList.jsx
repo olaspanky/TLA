@@ -10,7 +10,10 @@ import { useSelector } from "react-redux";
 const UserList = ({ setTeam, team }) => {
   const { data, isLoading, error } = useGetTeamListQuery();
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const { user } = useSelector((state) => state.auth);
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
 
   // Ensure data is an array, fallback to empty if undefined
   const safeData = Array.isArray(data) ? data : [];

@@ -22,7 +22,8 @@
 // };
 
 // const TaskCard = ({ task }) => {
-//   const { user } = useSelector((state) => state.auth);
+//    const { user, auth } = useSelector((state) => ({
+
 //   const [open, setOpen] = useState(false);
 
 //   return (
@@ -144,6 +145,8 @@ import { FaList } from "react-icons/fa";
 import UserInfo from "./UserInfo";
 import { IoMdAdd } from "react-icons/io";
 import AddSubTask from "./task/AddSubTask";
+import { selectCurrentUser } from "../redux/slices/authSlice";
+
 
 const ICONS = {
   high: <MdKeyboardDoubleArrowUp />,
@@ -152,7 +155,10 @@ const ICONS = {
 };
 
 const TaskCard = ({ task }) => {
-  const { user } = useSelector((state) => state.auth);
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
   const [open, setOpen] = useState(false);
 
   return (

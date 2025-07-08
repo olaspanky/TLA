@@ -2,10 +2,14 @@ import React from 'react';
   import { Filter } from 'lucide-react';
 import { useGetDepartmentMemberRatingsQuery } from '../../redux/slices/api/analyticsApiSlice';
 import { useGetDepartmentsQuery } from '../../redux/slices/api/departmentApiSlice';
+import selectCurrentUser from '../../redux/slices/authSlice'; 
 
 const PerformanceTrackingDashboard = () => {
   // Get current user from Redux store
-  const { user } = useSelector((state) => state.auth);
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
 
   // Fetch departments data
   const { 
