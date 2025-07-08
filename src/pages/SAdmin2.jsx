@@ -11,11 +11,15 @@ import {
   useDeleteObjectiveMutation
 } from '../redux/slices/api/objectiveApiSlice';
 import { useGetOrganizationRatingQuery } from '../redux/slices/api/analyticsApiSlice';
+import { selectCurrentUser } from '../redux/slices/authSlice';
 
 const PerformanceDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentQuarter, setCurrentQuarter] = useState('Q2-2025');
-  const { user } = useSelector((state) => state.auth);
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 

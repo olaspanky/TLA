@@ -291,7 +291,7 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className=" px-4 sm:px-6 lg:px-8 py-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-semibold text-gray-900 mb-6">User Management</h1>
 
       <div className="mb-6">
@@ -408,7 +408,7 @@ const AdminUsers = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editUserIds.has(user._id) && currentUser?.role === 'super_admin' ? (
+                    {editUserIds.has(user._id)  ? (
                       <select
                         name="reportingTo"
                         value={editFormData[user._id]?.reportingTo || ''}

@@ -11,12 +11,15 @@ import { useLogoutMutation } from "../redux/slices/api/authApiSlice";
 import { logout } from "../redux/slices/authSlice";
 import AddUser from "./AddUser"
 import ChangePassword from "./ChangePassword";
-
+import { selectCurrentUser } from "../redux/slices/authSlice";
 
 const UserAvatar = () => {
   const [open, setOpen] = useState(false);
   const [openPassword, setOpenPassword] = useState(false);
-  const { user } = useSelector((state) => state.auth);
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
   const dispatch = useDispatch();
   const navigate = useNavigate();
 

@@ -25,10 +25,14 @@ import {
 } from '../redux/slices/api/objectiveApiSlice';
 import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
+import { selectCurrentUser } from '../redux/slices/authSlice';
 
 const ProgressTracking = () => {
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
   const isAdmin = user?.role === 'admin'; // Check if user is an admin
   const [isActionLoading, setIsActionLoading] = useState({});
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);

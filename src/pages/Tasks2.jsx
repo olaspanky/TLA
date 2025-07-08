@@ -5,9 +5,13 @@ import { useCreateObjectiveMutation } from '../redux/slices/api/objectiveApiSlic
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../redux/slices/authSlice';
 
 const AddObjectivesForm = () => {
-  const { user } = useSelector((state) => state.auth); // Get authenticated user
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  })); // Get authenticated user
   const navigate = useNavigate();
   const location = useLocation();
 

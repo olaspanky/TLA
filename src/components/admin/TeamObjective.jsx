@@ -11,6 +11,7 @@ import {
   useDeleteObjectiveMutation,
 } from '../../redux/slices/api/objectiveApiSlice';
 import { useGetDepartmentRatingQuery } from '../../redux/slices/api/analyticsApiSlice'; // Import the department rating hook
+import selectCurrentUser from '../../redux/slices/authSlice'; // Import the selector for current user
 
 // ObjectiveModal Component (unchanged for brevity, same as provided)
 const ObjectiveModal = ({ isOpen, onClose, objective }) => {
@@ -191,7 +192,10 @@ const ComprehensivePerformanceDashboard = () => {
   const [currentQuarter, setCurrentQuarter] = useState('Q2-2025');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedObjective, setSelectedObjective] = useState(null);
-  const { user } = useSelector((state) => state.auth);
+   const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
 
   // Fetch data using RTK Query hooks
   const {
