@@ -24,13 +24,11 @@ import Admin3 from "./pages/AdminPT";
 import SAdmin1 from "./pages/SAdmin1";
 import SAdmin2 from "./pages/SAdmin2";
 import SAdmin3 from "./pages/Admindevelopment";
-import { setOpenSidebar } from "./redux/slices/authSlice";
+import { selectCurrentUser } from "./redux/slices/authSlice";
 
 function Layout() {
-  const { user } = useSelector((state) => state.auth);
-
+  const user = useSelector(selectCurrentUser);
   const location = useLocation();
-
   return user ? (
     <div className='w-full h-screen flex flex-col md:flex-row'>
     
