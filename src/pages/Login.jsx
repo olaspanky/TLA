@@ -2,9 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import Textbox from "../components/Textbox";
-import Textbox2 from "../components/Textbox2";
-import Button from "../components/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { useLoginMutation } from "../redux/slices/api/authApiSlice";
 import { toast, ToastContainer } from "react-toastify";
@@ -14,10 +11,10 @@ import Loading from "../components/Loader";
 import ForgotPassword from "../components/ForgotPassword";
 import { Target, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import tar from "../assets/target.png";
-import logo from "../../public/plogoo.png";
+import logo from "/src/assets/plogoo.png";
 
 const Login = () => {
-  const { user } = useSelector((state) => state.auth);
+  const { activeAccount } = useSelector((state) => state.auth);
   const {
     register,
     handleSubmit,
@@ -33,17 +30,15 @@ const Login = () => {
   const submitHandler = async (data) => {
     try {
       const result = await login(data).unwrap();
+      
       dispatch(
         setCredentials({
           user: result.data.user,
           token: result.data.token,
         })
       );
+
       toast.success("Login successful!");
-      console.log("Dispatched credentials:", {
-        user: result.data.user,
-        token: result.data.token,
-      });
       navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
@@ -51,17 +46,11 @@ const Login = () => {
     }
   };
 
-  console.log(
-    "Current auth state:",
-    useSelector((state) => state.auth)
-  );
-
   useEffect(() => {
-    if (user) {
-      console.log("User exists, redirecting to dashboard:", user);
+    if (activeAccount) {
       navigate("/dashboard");
     }
-  }, [user, navigate]);
+  }, [activeAccount, navigate]);
 
   return (
     <div className="w-full min-h-screen flex bg-gray-50">
@@ -69,13 +58,9 @@ const Login = () => {
         {/* Left Side - Hero Section */}
         <div className="hidden lg:flex lg:w-1/2 bg-[#000A48] relative overflow-hidden">
           <div className="absolute top-8 left-8 flex items-center space-x-2">
-            <div className=" flex justify-center items-center">
-                <img
-                  src={logo}
-                  alt="Target Illustration"
-                  className="w- h-auto"
-                />
-              </div>
+            <div className="flex justify-center items-center">
+              <img src={logo} alt="Target Illustration" className="w- h-auto" />
+            </div>
           </div>
           <div className="flex flex-col justify-center items-center px-16 w-full relative">
             <div className="mb-8">
@@ -86,11 +71,7 @@ const Login = () => {
               </h1>
             </div>
             <div className="relative flex justify-center items-center">
-              <img
-                src={tar}
-                alt="Target Illustration"
-                className="w-[500px] h-auto"
-              />
+              <img src={tar} alt="Target Illustration" className="w-[500px] h-auto" />
             </div>
           </div>
         </div>
@@ -113,10 +94,7 @@ const Login = () => {
                   Welcome back! Please sign in to continue
                 </p>
               </div>
-              <form
-                onSubmit={handleSubmit(submitHandler)}
-                className="space-y-6"
-              >
+              <form onSubmit={handleSubmit(submitHandler)} className="space-y-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Email address
@@ -269,6 +247,8 @@ const Login = () => {
           </div>
         </div>
       </div>
+      
+      {/* Forgot Password Modal */}
       {isForgotPasswordOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
           <div className="modal-content flex justify-center items-center w-full max-w-md bg-white rounded-2xl shadow-2xl relative overflow-hidden">
@@ -291,13 +271,12 @@ const Login = () => {
               </svg>
             </button>
             <div className="w-full p-6">
-              <ForgotPassword
-                setIsForgotPasswordOpen={setIsForgotPasswordOpen}
-              />
+              <ForgotPassword setIsForgotPasswordOpen={setIsForgotPasswordOpen} />
             </div>
           </div>
         </div>
       )}
+      
       <ToastContainer
         position="top-right"
         autoClose={3000}
