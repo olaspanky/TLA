@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Search,
   ChevronDown,
@@ -41,16 +41,13 @@ const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const usersPerPage = 10;
 
-  // Role options (match backend roles)
   const roleOptions = ['admin', 'manager', 'staff'];
 
-  // Department options
   const departmentOptions = useMemo(() => {
     if (!departmentsData) return [];
     return departmentsData.map((dept) => ({ id: dept._id, name: dept.name }));
   }, [departmentsData]);
 
-  // User options for reportingTo (only admins and managers, excluding the user being edited)
   const userOptions = useMemo(() => {
     if (!usersData?.users) return [];
     return usersData.users
@@ -58,7 +55,6 @@ const AdminUsers = () => {
       .map((u) => ({ id: u._id, name: u.name, email: u.email, role: u.role }));
   }, [usersData?.users]);
 
-  // Handle sorting
   const handleSort = (key) => {
     setSortConfig((prev) => ({
       key,
@@ -66,21 +62,19 @@ const AdminUsers = () => {
     }));
   };
 
-  // Get department name
   const getDepartmentName = (departmentId) => {
     if (!departmentId) return 'No department';
     const dept = departmentOptions.find((d) => d.id === departmentId);
     return dept ? dept.name : 'Unknown department';
   };
 
-  // Get reporting manager name
-  const getReportingToName = (reportingToId) => {
-    if (!reportingToId) return 'None';
+  const getReportingToName = (reportingTo) => {
+    if (!reportingTo || reportingTo.length === 0) return 'None';
+    const reportingToId = reportingTo[0]; // Use the first ID directly
     const manager = userOptions.find((u) => u.id === reportingToId);
     return manager ? `${manager.name} (${manager.email})` : 'Unknown';
   };
 
-  // Sort and filter users
   const sortedAndFilteredUsers = useMemo(() => {
     if (!usersData?.users) return [];
 
@@ -97,7 +91,7 @@ const AdminUsers = () => {
           : sortConfig.key === 'isActive'
           ? a.isActive.toString()
           : sortConfig.key === 'reportingTo'
-          ? getReportingToName(a.reportingTo?._id || a.reportingTo)
+          ? getReportingToName(a.reportingTo)
           : a[sortConfig.key];
       const valueB =
         sortConfig.key === 'department'
@@ -105,7 +99,7 @@ const AdminUsers = () => {
           : sortConfig.key === 'isActive'
           ? b.isActive.toString()
           : sortConfig.key === 'reportingTo'
-          ? getReportingToName(b.reportingTo?._id || b.reportingTo)
+          ? getReportingToName(b.reportingTo)
           : b[sortConfig.key];
       if (valueA < valueB) return sortConfig.direction === 'asc' ? -1 : 1;
       if (valueA > valueB) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -113,36 +107,30 @@ const AdminUsers = () => {
     });
   }, [usersData?.users, searchTerm, sortConfig, departmentOptions, userOptions]);
 
-  // Pagination logic
   const totalPages = Math.ceil(sortedAndFilteredUsers.length / usersPerPage);
   const paginatedUsers = sortedAndFilteredUsers.slice(
     (currentPage - 1) * usersPerPage,
     currentPage * usersPerPage
   );
 
-  // Handle page change
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  // Handle edit click
   const handleEditClick = (user) => {
-    console.log('Editing user:', user);
     setEditUserIds((prev) => new Set(prev).add(user._id));
     setEditFormData((prev) => ({
       ...prev,
       [user._id]: {
         role: user.role || '',
         department: user.department?._id || user.department || '',
-        reportingTo: user.reportingTo?._id || user.reportingTo || '',
+        reportingTo: user.reportingTo && user.reportingTo.length > 0 ? user.reportingTo[0] : '',
       },
     }));
   };
 
-  // Handle edit form change
   const handleEditFormChange = (userId, e) => {
     const { name, value } = e.target;
-    console.log('Form change:', { userId, name, value });
     setEditFormData((prev) => ({
       ...prev,
       [userId]: {
@@ -152,7 +140,6 @@ const AdminUsers = () => {
     }));
   };
 
-  // Handle update user (using assignUserDetails)
   const handleUpdateUser = async (userId) => {
     const userData = editFormData[userId];
     if (!userData?.role) {
@@ -165,7 +152,6 @@ const AdminUsers = () => {
       return;
     }
 
-    // Validate reportingTo
     if (currentUser?.role === 'super_admin' && userData.reportingTo) {
       const selectedUser = userOptions.find((u) => u.id === userData.reportingTo);
       if (!selectedUser) {
@@ -190,7 +176,6 @@ const AdminUsers = () => {
         departmentId: userData.department || null,
         reportingTo: currentUser?.role === 'super_admin' ? userData.reportingTo || null : undefined,
       };
-      console.log('Payload for /user/{id}/assign:', payload); // Log the payload as requested
       await assignUserDetails(payload).unwrap();
       toast.success('User details assigned successfully');
       setEditUserIds((prev) => {
@@ -205,7 +190,6 @@ const AdminUsers = () => {
       });
       refetch();
     } catch (err) {
-      console.error('Assign error:', err);
       const errorMessage =
         err?.data?.error ||
         err?.data?.message ||
@@ -222,7 +206,6 @@ const AdminUsers = () => {
     }
   };
 
-  // Handle cancel edit
   const handleCancelEdit = (userId) => {
     setEditUserIds((prev) => {
       const newSet = new Set(prev);
@@ -236,7 +219,6 @@ const AdminUsers = () => {
     });
   };
 
-  // Handle toggle user status
   const handleToggleUserStatus = async (userId) => {
     if (!userId) {
       toast.error('Invalid user ID');
@@ -249,7 +231,6 @@ const AdminUsers = () => {
       toast.success(response.message || 'User status toggled successfully');
       refetch();
     } catch (err) {
-      console.error('Toggle status error:', err);
       const errorMessage =
         err?.data?.message ||
         (err.status === 400
@@ -267,19 +248,16 @@ const AdminUsers = () => {
     }
   };
 
-  // Handle open sub-objective modal
   const handleOpenSubObjectiveModal = (user) => {
     setSelectedUser(user);
     setIsSubObjectiveModalOpen(true);
   };
 
-  // Handle close sub-objective modal
   const handleCloseSubObjectiveModal = () => {
     setIsSubObjectiveModalOpen(false);
     setSelectedUser(null);
   };
 
-  // Render sort icon
   const renderSortIcon = (key) => {
     if (sortConfig.key !== key) return null;
     return sortConfig.direction === 'asc' ? (
@@ -289,7 +267,6 @@ const AdminUsers = () => {
     );
   };
 
-  // Capitalize role for display
   const capitalizeRole = (role) => {
     if (!role) return '';
     return role.charAt(0).toUpperCase() + role.slice(1);
@@ -314,10 +291,9 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className=" px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-semibold text-gray-900 mb-6">User Management</h1>
 
-      {/* Search Bar */}
       <div className="mb-6">
         <div className="relative max-w-md">
           <input
@@ -331,7 +307,6 @@ const AdminUsers = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -451,7 +426,9 @@ const AdminUsers = () => {
                           ))}
                       </select>
                     ) : (
-                      getReportingToName(user.reportingTo?._id || user.reportingTo)
+                      user.reportingTo && user.reportingTo.length > 0
+                        ? usersData?.users?.find((u) => u._id === user.reportingTo[0])?.name || 'Unknown'
+                        : 'None'
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -525,7 +502,6 @@ const AdminUsers = () => {
         </table>
       </div>
 
-      {/* Sub-Objective Modal */}
       {isSubObjectiveModalOpen && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
@@ -570,7 +546,6 @@ const AdminUsers = () => {
         </div>
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-6 flex justify-between items-center">
           <div className="text-sm text-gray-600">

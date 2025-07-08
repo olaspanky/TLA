@@ -13,6 +13,7 @@ import {
 import { useGetUserRatingQuery } from '../redux/slices/api/analyticsApiSlice';
 import Guage from '../components/GaugeChart';
 import { toast } from 'sonner';
+import { selectCurrentUser } from '../redux/slices/authSlice';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('Home');
@@ -31,8 +32,11 @@ const Dashboard = () => {
   });
   const [openCommentDropdowns, setOpenCommentDropdowns] = useState({});
   const [openProgressDropdowns, setOpenProgressDropdowns] = useState({});
-  const { user } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
+  const { user, auth } = useSelector((state) => ({
+    user: selectCurrentUser(state),
+    auth: state.auth
+  }));
+    const navigate = useNavigate();
 
   // Fetch objectives and mutations
   const { data: objectives = [], isLoading, isError, error } = useGetObjectivesQuery();
@@ -79,6 +83,7 @@ const Dashboard = () => {
     });
 
     console.log(`Total tasks: ${totalTasks}, Completed tasks: ${completedTasks}`); // Debug calculation
+    console.log('User object:', user);
 
     if (totalTasks === 0) return 'No tasks available'; // Handle no tasks case
     const completionPercentage = Math.round((completedTasks / totalTasks) * 100);
