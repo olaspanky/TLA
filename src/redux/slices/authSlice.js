@@ -56,6 +56,9 @@ const authSlice = createSlice({
           isSidebarOpen: state.isSidebarOpen,
         })
       );
+      localStorage.setItem("userInfo", JSON.stringify(user));
+      localStorage.setItem("authToken", token);
+      
     },
     switchAccount: (state, action) => {
       const accountIndex = action.payload;
