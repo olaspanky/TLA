@@ -228,20 +228,7 @@ const Topbar = () => {
           </div>
 
           {/* Notification Bell */}
-          <div className="relative">
-            <button
-              className="notification-bell text-white hover:text-blue-300 relative"
-              onClick={() => setShowNotificationsPanel(!showNotificationsPanel)}
-              aria-label="Notifications"
-            >
-              <MdNotifications size={24} />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
-            </button>
-          </div>
+         
 
        
           {(activeAccount.user.role === "admin" ||
