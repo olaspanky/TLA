@@ -603,31 +603,34 @@ const ProgressTracking = () => {
                       {objective.status || 'Unknown'}
                     </span>
                   </div>
-                  <div className="relative">
-                    <button
-                      onClick={() => toggleProgressDropdown(objective._id)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <MoreHorizontal className="w-5 h-5" />
-                    </button>
-                    {openProgressDropdowns[objective._id] && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                        <select
-                          value={objective.progress || 0}
-                          onChange={(e) => handleUpdateProgress(objective._id, parseInt(e.target.value))}
-                          className="w-full p-2 text-sm text-gray-700 bg-white border-none focus:outline-none"
-                          disabled={isUpdatingProgress}
-                        >
-                          <option value={0}>0%</option>
-                          <option value={25}>25%</option>
-                          <option value={50}>50%</option>
-                          <option value={75}>75%</option>
-                          <option value={100}>100%</option>
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                                                        <p className="text-xs text-gray-600 mb-4">{objective.assignedTo.name}</p>
+                   <div className='flex gap-3'>
+                                        <p className="text-xs text-gray-600 mb-4">{objective.assignedTo.name}</p>
+                                                       <div className="relative">
+                                       <button
+                                         onClick={() => toggleProgressDropdown(objective._id)}
+                                         className="text-white hover:text-gray-600 transition-colors flex bg-blue-500 rounded-md"
+                                       >
+                                         <MoreHorizontal className="w-5 h-5" />
+                 
+                                         <span className='text-xs'>Update Progress</span>
+                                       </button>
+                                       {openProgressDropdowns[objective._id] && (
+                                         <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                                           <select
+                                             value={objective.progress || 0}
+                                             onChange={(e) => handleUpdateProgress(objective._id, parseInt(e.target.value))}
+                                             className="w-full p-2 text-sm text-gray-700 bg-white border-none focus:outline-none"
+                                             disabled={isUpdatingProgress}
+                                           >
+                                             <option value={0}>0%</option>
+                                             <option value={25}>25%</option>
+                                             <option value={50}>50%</option>
+                                             <option value={75}>75%</option>
+                                           </select>
+                                         </div>
+                                       )} 
+                                     </div>
+                                     </div>
 
                 </div>
                 <p className="text-gray-600 mb-6 leading-relaxed">{objective.description}</p>
