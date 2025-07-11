@@ -243,7 +243,7 @@ const PerformanceDashboard = () => {
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold text-gray-900">Department Performance</h2>
-              <button className="text-sm text-blue-600 hover:text-blue-800">Create a chart</button>
+              <button className="text-sm text-blue-600 hover:text-blue-800"></button>
             </div>
           </div>
           <div className="p-6">
