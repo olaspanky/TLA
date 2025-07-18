@@ -10,13 +10,13 @@ import {
   useGetUpcomingObjectivesQuery,
   useDeleteObjectiveMutation,
 } from '../../redux/slices/api/objectiveApiSlice';
-import { useGetDepartmentRatingQuery } from '../../redux/slices/api/analyticsApiSlice'; // Import the department rating hook
-import selectCurrentUser from '../../redux/slices/authSlice'; // Import the selector for current user
+import { useGetDepartmentRatingQuery } from '../../redux/slices/api/analyticsApiSlice';
+import { selectCurrentUser } from '../../redux/slices/authSlice'; // Fixed import
 
-// ObjectiveModal Component (unchanged for brevity, same as provided)
+// ObjectiveModal Component
 const ObjectiveModal = ({ isOpen, onClose, objective }) => {
   const [selectedRating, setSelectedRating] = useState('75%');
-  const [assignedTo, setAssignedTo] = useState(objective?.assignedTo);
+  const [assignedTo, setAssignedTo] = useState(objective?.assignedTo ?? 'Unassigned');
 
   if (!isOpen || !objective) return null;
 
@@ -24,7 +24,7 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
   console.log('ObjectiveModal objective:', objective);
 
   // Format dates
-  const endDate = objective.endDate
+  const endDate = objective?.endDate
     ? new Date(objective.endDate).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -34,11 +34,11 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
 
   // Calculate progress
   const progressValue =
-    objective.progress !== undefined
+    objective?.progress !== undefined
       ? objective.progress
-      : objective.subObjectives?.length > 0
+      : objective?.subObjectives?.length > 0
       ? Math.round(
-          (objective.subObjectives.filter((subObj) => subObj.completed).length /
+          (objective.subObjectives.filter((subObj) => subObj?.completed).length /
             objective.subObjectives.length) *
             100
         )
@@ -63,7 +63,7 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-white rounded-xl w-full  max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-start mb-4">
@@ -77,7 +77,7 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
           <div className="mb-6">
             <h3 className="text-base font-medium text-gray-900 mb-3">Lag Objectives</h3>
             <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
-              <span>Assigned to: {objective.assignedTo || 'Unassigned'}</span>
+              <span>Assigned to: {objective?.assignedTo ?? 'Unassigned'}</span>
               <span>Due Date: {endDate}</span>
               <div className="flex items-center">
                 <span className="mr-2">Progress:</span>
@@ -93,7 +93,7 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
             {/* Main Objective Card */}
             <div className="border border-gray-200 rounded-lg p-4 bg-white flex justify-between items-center">
               <h4 className="text-base font-medium text-gray-900">
-                {objective.title || 'No title provided'}
+                {objective?.title ?? 'No title provided'}
               </h4>
               <button className="text-gray-400 hover:text-gray-600">
                 <ExternalLink size={16} />
@@ -105,7 +105,7 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
         {/* Lead Objectives Section */}
         <div className="p-6">
           <h3 className="text-base font-medium text-gray-900 mb-4">Lead Objectives</h3>
-          {objective.subObjectives && objective.subObjectives.length > 0 ? (
+          {objective?.subObjectives?.length > 0 ? (
             <div className="space-y-3">
               {objective.subObjectives.map((subObj, index) => (
                 <div
@@ -115,20 +115,20 @@ const ObjectiveModal = ({ isOpen, onClose, objective }) => {
                   <div className="flex items-center gap-3">
                     <input
                       type="checkbox"
-                      checked={subObj.completed || false}
+                      checked={subObj?.completed ?? false}
                       className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                       onChange={() => {}}
                     />
                     <span
                       className={`text-sm ${
-                        subObj.completed ? 'line-through text-gray-500' : 'text-gray-900'
+                        subObj?.completed ? 'line-through text-gray-500' : 'text-gray-900'
                       }`}
                     >
-                      {subObj.title || 'Untitled task'}
+                      {subObj?.title ?? 'Untitled task'} (Type: {subObj?.type ?? 'Unknown'})
                     </span>
                   </div>
-                  <span className={getStatusBadge(subObj.completed)}>
-                    {getStatusText(subObj.completed)}
+                  <span className={getStatusBadge(subObj?.completed)}>
+                    {getStatusText(subObj?.completed)}
                   </span>
                 </div>
               ))}
@@ -192,7 +192,7 @@ const ComprehensivePerformanceDashboard = () => {
   const [currentQuarter, setCurrentQuarter] = useState('Q2-2025');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedObjective, setSelectedObjective] = useState(null);
-   const { user, auth } = useSelector((state) => ({
+  const { user, auth } = useSelector((state) => ({
     user: selectCurrentUser(state),
     auth: state.auth
   }));
@@ -225,9 +225,12 @@ const ComprehensivePerformanceDashboard = () => {
   } = useGetDepartmentRatingQuery('68581c5e5e0f68e44a3f6d74');
 
   // Log data for debugging
-  console.log("Performance Review:", performanceReview);
-  console.log("Upcoming Objectives Data:", upcomingObjectives);
-  console.log("Department Rating:", departmentRating);
+  console.log('Objectives:', objectives);
+  console.log('Performance Review:', performanceReview);
+  console.log('Upcoming Objectives:', upcomingObjectives);
+  console.log('Department Rating:', departmentRating);
+  console.log('User:', user);
+  console.log('Auth:', auth);
 
   // Mutation hooks
   const [createObjective] = useCreateObjectiveMutation();
@@ -244,7 +247,7 @@ const ComprehensivePerformanceDashboard = () => {
       'bg-orange-500', 'bg-pink-500', 'bg-indigo-500',
       'bg-red-500', 'bg-yellow-500', 'bg-teal-500'
     ];
-    return colors[name.length % colors.length];
+    return name ? colors[name.length % colors.length] : 'bg-gray-500';
   };
 
   const getStatusColor = (status) => {
@@ -266,7 +269,8 @@ const ComprehensivePerformanceDashboard = () => {
         title: "New Objective",
         description: "Objective description",
         dueDate: new Date().toISOString(),
-        priority: "Medium"
+        priority: "Medium",
+        type: "Default" // Added to prevent type-related errors
       };
       await createObjective(newObjective).unwrap();
       refetchObjectives();
@@ -294,6 +298,7 @@ const ComprehensivePerformanceDashboard = () => {
   };
 
   const handleOpenModal = (objective) => {
+    console.log('Opening modal with objective:', objective);
     setSelectedObjective(objective);
     setIsModalOpen(true);
   };
@@ -305,18 +310,19 @@ const ComprehensivePerformanceDashboard = () => {
 
   // Format upcoming objectives for display
   const formattedDeadlines = upcomingObjectives.map((obj) => ({
-    id: obj._id,
-    title: obj.title,
-    description: obj.description,
-    subObjectives: obj.subObjectives || [],
-    priorityLevel: obj.priorityLevel,
-    startDate: obj.startDate,
-    endDate: obj.endDate,
-    progress: obj.progress,
-    assignedTo: obj.assignedTo?.name,
-    assignedToName: obj.assignedTo?.name || 'Unassigned',
-    lastUpdated: `Last updated: ${new Date(obj.updatedAt).toLocaleDateString()}`,
-    updatedAt: obj.updatedAt
+    id: obj?._id ?? '',
+    title: obj?.title ?? 'Untitled',
+    description: obj?.description ?? 'No description',
+    subObjectives: obj?.subObjectives ?? [],
+    priorityLevel: obj?.priorityLevel ?? 'Unknown',
+    startDate: obj?.startDate,
+    endDate: obj?.endDate,
+    progress: obj?.progress,
+    assignedTo: obj?.assignedTo?.name,
+    assignedToName: obj?.assignedTo?.name ?? 'Unassigned',
+    lastUpdated: obj?.updatedAt ? `Last updated: ${new Date(obj.updatedAt).toLocaleDateString()}` : 'Unknown',
+    updatedAt: obj?.updatedAt,
+    type: obj?.type ?? 'Default' // Added fallback
   }));
 
   // Use department rating for performance score, scaled to /5.0 if necessary
@@ -325,22 +331,22 @@ const ComprehensivePerformanceDashboard = () => {
     : deptRatingError
     ? 0
     : departmentRating?.averageRating
-    ? (departmentRating.averageRating / 20).toFixed(1) // Scale 0-100 to 0-5
+    ? (departmentRating.averageRating / 20).toFixed(1)
     : 0;
 
-  const completionRate = performanceReview.completionRate || 0;
-  const retentionRate = performanceReview.retentionRate || 0;
+  const completionRate = performanceReview?.completionRate ?? 0;
+  const retentionRate = performanceReview?.retentionRate ?? 0;
 
   // Filter employees by search term
-  const filteredEmployees = performanceReview.performanceReviews?.filter(employee =>
-    employee.user.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredEmployees = performanceReview?.performanceReviews?.filter(employee =>
+    employee?.user?.name?.toLowerCase()?.includes(searchTerm.toLowerCase())
+  ) ?? [];
 
-  console.log("Filtered Employees:", filteredEmployees);
+  console.log('Filtered Employees:', filteredEmployees);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className=" mx-auto space-y-6">
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
@@ -404,7 +410,7 @@ const ComprehensivePerformanceDashboard = () => {
                     strokeWidth="8"
                     fill="none"
                     strokeDasharray={`${2 * Math.PI * 56}`}
-                    strokeDashoffset={`${2 * Math.PI * 56 * (1 - (performanceScore / 5))}`} // Update to use performanceScore
+                    strokeDashoffset={`${2 * Math.PI * 56 * (1 - (performanceScore / 5))}`}
                     className="text-green-500 transition-all duration-300"
                     strokeLinecap="round"
                   />
@@ -437,14 +443,14 @@ const ComprehensivePerformanceDashboard = () => {
               <div className="space-y-4">
                 {formattedDeadlines.map((item) => (
                   <div
-                    key={item.id}
+                    key={item?.id}
                     onClick={() => handleOpenModal(item)}
                     className="cursor-pointer gap-2 border-b border-gray-100 last:border-b-0 pb-4 last:pb-0 hover:bg-gray-50 transition-colors"
                   >
-                    <h4 className="font-medium text-gray-900 text-sm leading-tight mb-1">{item.title.substring(0, 70)}...</h4>
+                    <h4 className="font-medium text-gray-900 text-sm leading-tight mb-1">{item?.title?.substring(0, 70) ?? 'Untitled'}...</h4>
                     <div className="flex justify-between">
-                      <p className="text-xs text-gray-600 mb-2">{item.subtitle}</p>
-                      <p className="text-xs text-gray-500">{item.lastUpdated}</p>
+                      <p className="text-xs text-gray-600 mb-2">{item?.description ?? 'No description'}</p>
+                      <p className="text-xs text-gray-500">{item?.lastUpdated ?? 'Unknown'}</p>
                     </div>
                   </div>
                 ))}
@@ -455,7 +461,7 @@ const ComprehensivePerformanceDashboard = () => {
 
         {/* Performance Review Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray200">
+          <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Performance Review</h3>
               <div className="flex items-center gap-3">
@@ -524,7 +530,7 @@ const ComprehensivePerformanceDashboard = () => {
                 ) : reviewError ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-4 text-center text-sm text-red-600">
-                      Error loading performance reviews{reviewError.status === 401 ? ': Please log in again' : ''}
+                      Error loading performance reviews{reviewError?.status === 401 ? ': Please log in again' : ''}
                     </td>
                   </tr>
                 ) : filteredEmployees.length === 0 ? (
@@ -533,31 +539,31 @@ const ComprehensivePerformanceDashboard = () => {
                   </tr>
                 ) : (
                   filteredEmployees.map((employee) => (
-                    <tr key={employee.user._id} className="hover:bg-gray-50">
+                    <tr key={employee?.user?._id ?? Math.random()} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full ${getAvatarColor(employee.user.name)} flex items-center justify-center text-white text-xs font-medium`}>
-                            {employee.user.name.slice(0, 2).toUpperCase()}
+                          <div className={`w-8 h-8 rounded-full ${getAvatarColor(employee?.user?.name ?? 'Unknown')} flex items-center justify-center text-white text-xs font-medium`}>
+                            {(employee?.user?.name ?? 'N/A').slice(0, 2).toUpperCase()}
                           </div>
-                          <span className="text-sm font-medium text-gray-900">{employee.user.name}</span>
+                          <span className="text-sm font-medium text-gray-900">{employee?.user?.name ?? 'N/A'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {employee.user.role || 'N/A'}
+                        {employee?.user?.role ?? 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {employee.user.department.name}
+                        {employee?.user?.department?.name ?? 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {employee.user.reportingTo.length > 0 ? employee.user.reportingTo[0].name : 'N/A'}
+                        {employee?.user?.reportingTo?.length > 0 ? employee.user.reportingTo[0]?.name ?? 'N/A' : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(employee.performanceStatus)}`}>
-                          {employee.performanceStatus}
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(employee?.performanceStatus ?? 'Unknown')}`}>
+                          {employee?.performanceStatus ?? 'Unknown'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {new Date(performanceReview.endDate).toLocaleDateString()}
+                        {performanceReview?.endDate ? new Date(performanceReview.endDate).toLocaleDateString() : 'N/A'}
                       </td>
                     </tr>
                   ))

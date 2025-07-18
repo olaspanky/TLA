@@ -15,6 +15,7 @@ import Users from "./pages/Users";
 import Dashboard from "./pages/dashboard";
 import Dashboard2 from "./pages/dashboard2";
 import Progress from "./pages/Progress";
+import AdminProgress from "./pages/AdminProgress";
 import Development from "./pages/Development";
 import Register from "./pages/Register";
 import Rating from "./pages/Rating";
@@ -121,6 +122,7 @@ function App() {
           <Route path='/sadmin1' element={<SAdmin1 />} />
           <Route path='/sadmin2' element={<SAdmin2 />} />
           <Route path='/sadmin3' element={<SAdmin3 />} />
+          <Route path='/adminprogress' element={<AdminProgress />} />
         </Route>
 
         <Route path='/log-in' element={<Login />} />
