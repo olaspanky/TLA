@@ -124,11 +124,12 @@ function App() {
           <Route path='/sadmin2' element={<SAdmin2 />} />
           <Route path='/sadmin3' element={<SAdmin3 />} />
           <Route path='/adminprogress' element={<AdminProgress />} />
-          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         </Route>
 
         <Route path='/log-in' element={<Login />} />
         <Route path='/register' element={<Register />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
       </Routes>
 
       <Toaster richColors />
