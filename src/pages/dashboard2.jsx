@@ -1072,8 +1072,8 @@ const handleOpenCommentModal = (objectiveId) => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <div className=" ">
+          <div className="px-6 py-4 border-b  flex items-center justify-between">
             <h2 className="text-lg font-medium text-gray-900">Your Objectives</h2>
             <div className="flex space-x-3">
               <button className="flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
@@ -1090,7 +1090,7 @@ const handleOpenCommentModal = (objectiveId) => {
             </div>
           </div>
 
-          <div className="divide-y divide-gray-200">
+          <div className=" flex flex-col gap-5">
             {isLoading ? (
               <div className="p-6 text-center text-gray-600">Loading objectives...</div>
             ) : isError ? (
@@ -1099,7 +1099,7 @@ const handleOpenCommentModal = (objectiveId) => {
               <div className="p-6 text-center text-gray-600">No objectives found. Add one to get started!</div>
             ) : (
               objectives.map((objective) => (
-                <div key={objective._id} className="p-6">
+                <div key={objective._id} className="p-6 border border-gray-200 shadow-lg">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center">
                       <h3 className="text-base font-medium text-gray-900">
@@ -1119,62 +1119,7 @@ const handleOpenCommentModal = (objectiveId) => {
                     </div>
                     <div className="flex gap-3">
                       <p className="text-xs text-gray-600 mb-4">{objective.assignedTo.name}</p>
-                      <div className="relative">
-                        <button
-                          onClick={() => toggleActionDropdown(objective._id)}
-                          className="text-white hover:text-gray-600 transition-colors flex bg-blue-900 rounded-md p-1"
-                        >
-                          <Edit2 className="w-5 h-5" />
-                        </button>
-                        {openActionDropdowns[objective._id] && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 animate-fadeIn">
-                            <button
-                              onClick={() => {
-                                setSelectedObjectiveId(objective._id);
-                                setIsDeleteModalOpen(true);
-                                toggleActionDropdown(objective._id);
-                              }}
-                              className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleOpenUpdateModal(objective);
-                                toggleActionDropdown(objective._id);
-                              }}
-                              className="flex w-full items-center px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
-                            >
-                              <Edit2 className="w-4 h-4 mr-2" />
-                              Edit
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="relative">
-                        <button
-                          onClick={() => toggleProgressDropdown(objective._id)}
-                          className="text-white hover:text-gray-600 transition-colors flex bg-blue-900 rounded-md p-1"
-                        >
-                          <Loader className="w-5 h-5" />
-                        </button>
-                        {openProgressDropdowns[objective._id] && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                            <select
-                              value={objective.progress || 0}
-                              onChange={(e) => handleUpdateProgress(objective._id, parseInt(e.target.value))}
-                              className="w-full p-2 text-sm text-gray-700 bg-white border-none focus:outline-none"
-                              disabled={isUpdatingProgress}
-                            >
-                              <option value={0}>0%</option>
-                              <option value={25}>25%</option>
-                              <option value={50}>50%</option>
-                              <option value={75}>75%</option>
-                            </select>
-                          </div>
-                        )}
-                      </div>
+                    
                     </div>
                   </div>
 
@@ -1273,6 +1218,62 @@ const handleOpenCommentModal = (objectiveId) => {
                       >
                         <MessageSquare className="w-4 h-4" />
                       </button>
+                    <div className="relative">
+                        <button
+                          onClick={() => toggleActionDropdown(objective._id)}
+                          className="text-white hover:text-gray-600 transition-colors flex bg-blue-900 rounded-md p-1"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                        {openActionDropdowns[objective._id] && (
+                          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 animate-fadeIn">
+                            <button
+                              onClick={() => {
+                                setSelectedObjectiveId(objective._id);
+                                setIsDeleteModalOpen(true);
+                                toggleActionDropdown(objective._id);
+                              }}
+                              className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleOpenUpdateModal(objective);
+                                toggleActionDropdown(objective._id);
+                              }}
+                              className="flex w-full items-center px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                            >
+                              <Edit2 className="w-4 h-4 mr-2" />
+                              Edit
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <button
+                          onClick={() => toggleProgressDropdown(objective._id)}
+                          className="text-white hover:text-gray-600 transition-colors flex bg-blue-900 rounded-md p-1"
+                        >
+                          <Loader className="w-5 h-5" />
+                        </button>
+                        {openProgressDropdowns[objective._id] && (
+                          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                            <select
+                              value={objective.progress || 0}
+                              onChange={(e) => handleUpdateProgress(objective._id, parseInt(e.target.value))}
+                              className="w-full p-2 text-sm text-gray-700 bg-white border-none focus:outline-none"
+                              disabled={isUpdatingProgress}
+                            >
+                              <option value={0}>0%</option>
+                              <option value={25}>25%</option>
+                              <option value={50}>50%</option>
+                              <option value={75}>75%</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
