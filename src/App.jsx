@@ -27,27 +27,30 @@ import SAdmin2 from "./pages/SAdmin2";
 import SAdmin3 from "./pages/Admindevelopment";
 import ResetPasswordPage from "./pages/reset-password/[token]"; // Import the correct component
 import { selectCurrentUser } from "./redux/slices/authSlice";
+import ScrollArrows from './components/Scroll'; // Adjust the import path as needed
+
 
 function Layout() {
   const user = useSelector(selectCurrentUser);
   const location = useLocation();
+    const containerRef = useRef(null);
+
   return user ? (
-    <div className='w-full h-screen flex flex-col md:flex-row'>
-    
-
-      <div className='flex-1 overflow-y-auto pb-12'>
+     <div className="w-full h-screen flex flex-col md:flex-row">
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-auto  pb-12 bg-white rounded-lg shadow-md"
+        style={{
+          scrollbarWidth: 'thin', // For Firefox
+          scrollbarColor: '#888 #f1f1f1', // Thumb and track color for Firefox
+        }}
+      >
         <Navbar />
-
-       <div 
-  className='z-30 2xl:mt-[-100px] xl:mt-[-60px] 2xl:mx-20 mx-9 rounded-lg shadow-md h-[100vh] overflow-y-auto bg-white'
-  style={{
-    scrollbarWidth: 'thin', // For Firefox
-    scrollbarColor: '#888 #f1f1f1', // Thumb and track color for Firefox
-  }}
->
-  <Outlet />
-</div>
+        <div className="2xl:mt-[-100px] xl:mt-[-60px] min-h-full 2xl:mx-20 mx-9">
+          <Outlet />
+        </div>
       </div>
+      <ScrollArrows scrollContainerRef={containerRef} />
     </div>
   ) : (
     <Navigate to='/log-in' state={{ from: location }} replace />
