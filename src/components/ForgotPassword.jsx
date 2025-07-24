@@ -25,9 +25,9 @@ const ForgotPasswordForm = () => {
   };
 
   return (
-    <div className="p-12 flex items-center justify-center bg-blue-900">
+    <div className="p-12 flex items-center justify-center bg-[#000A48]">
       <div className="w-full max-w-md p-8 bg-white/10 backdrop-blur-md rounded-xl shadow-2xl border border-white/20">
-        <h2 className="text-3xl font-bold mb-6 text-center text-white bg-blue-600 bg-clip-text">
+        <h2 className="text-3xl font-bold mb-6 text-center text-white bg-blue-900 bg-clip-text">
           Forgot Password
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -48,7 +48,7 @@ const ForgotPasswordForm = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-white text-[#000A48] font-semibold py-3 rounded-lg shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "Sending..." : "Request Reset"}
           </button>
@@ -64,8 +64,8 @@ const ForgotPasswordForm = () => {
           )}
         </form>
         <p className="mt-4 text-center text-gray-400 text-sm">
-          Remember your password?{" "}
-          <a href="/login" className="text-blue-400 hover:underline">
+          Remembered your password 🤨 ?{" "}
+          <a href="/log-in" className="text-white hover:underline">
             Sign in
           </a>
         </p>

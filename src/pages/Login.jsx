@@ -206,7 +206,7 @@ const Login = () => {
       {/* Forgot Password Modal */}
       {isForgotPasswordOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
-          <div className="modal-content flex justify-center items-center w-full max-w-md bg-white rounded-2xl shadow-2xl relative overflow-hidden">
+          <div className="modal-content flex justify-center items-center w-full max-w-md bg-[#000A48] rounded-2xl shadow-2xl relative overflow-hidden">
             <button
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200"
               onClick={() => setIsForgotPasswordOpen(false)}
