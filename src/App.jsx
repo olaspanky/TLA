@@ -38,9 +38,15 @@ function Layout() {
       <div className='flex-1 overflow-y-auto pb-12'>
         <Navbar />
 
-        <div className='z-30  2xl:mt-[-100px] xl:mt-[-60px]  2xl:mx-20 mx-9 rounded-lg shadow-md h-[100vh] overflow-scroll overflow-y-auto'> 
-          <Outlet />
-        </div>
+       <div 
+  className='z-30 2xl:mt-[-100px] xl:mt-[-60px] 2xl:mx-20 mx-9 rounded-lg shadow-md h-[100vh] overflow-y-auto bg-white'
+  style={{
+    scrollbarWidth: 'thin', // For Firefox
+    scrollbarColor: '#888 #f1f1f1', // Thumb and track color for Firefox
+  }}
+>
+  <Outlet />
+</div>
       </div>
     </div>
   ) : (

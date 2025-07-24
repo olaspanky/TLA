@@ -122,3 +122,27 @@
     box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
   }
 }
+/* For Webkit browsers (Chrome, Safari, Edge) */
+.z-30::-webkit-scrollbar {
+  width: 8px; /* Slim scrollbar */
+}
+
+.z-30::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Track color */
+  border-radius: 8px;
+}
+
+.z-30::-webkit-scrollbar-thumb {
+  background: #888; /* Thumb color */
+  border-radius: 8px;
+}
+
+.z-30::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Thumb color on hover */
+}
+
+/* Ensure smooth scrolling */
+.z-30 {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
