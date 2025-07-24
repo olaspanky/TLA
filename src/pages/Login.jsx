@@ -64,14 +64,14 @@ const Login = () => {
           </div>
           <div className="flex flex-col justify-center items-center px-16 w-full relative">
             <div className="mb-8">
-              <h1 className="text-white text-5xl font-bold leading-tight">
+              <h1 className="text-white text-3xl 2xl:text-5xl font-bold leading-tight">
                 Keep an eye on
                 <br />
                 Your <span className="text-green-400">Objectives</span>
               </h1>
             </div>
             <div className="relative flex justify-center items-center">
-              <img src={tar} alt="Target Illustration" className="w-[500px] h-auto" />
+              <img src={tar} alt="Target Illustration" className="w-[350px] 2xl:w-[500px] h-auto" />
             </div>
           </div>
         </div>

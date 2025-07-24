@@ -25,7 +25,7 @@ import Admin3 from "./pages/AdminPT";
 import SAdmin1 from "./pages/SAdmin1";
 import SAdmin2 from "./pages/SAdmin2";
 import SAdmin3 from "./pages/Admindevelopment";
-import ResetPasswordPage from "./pages/reset/[token]"; // Import the correct component
+import ResetPasswordPage from "./pages/reset-password/[token]"; // Import the correct component
 import { selectCurrentUser } from "./redux/slices/authSlice";
 
 function Layout() {
