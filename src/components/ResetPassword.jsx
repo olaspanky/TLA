@@ -26,7 +26,7 @@ const ResetPasswordForm = ({ resetToken }) => {
       console.log("API Response:", response);
       if (response?.data?.success) {
         setShowSuccess(true);
-        setTimeout(() => navigate("/login"), 3000); // Redirect to login after 3 seconds
+        setTimeout(() => navigate("/log-in"), 3000); // Redirect to login after 3 seconds
       }
     } catch (err) {
       console.error("Reset password error:", err);
@@ -42,7 +42,7 @@ const ResetPasswordForm = ({ resetToken }) => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900">
       <div className="w-full max-w-md p-8 bg-white/10 backdrop-blur-md rounded-xl shadow-2xl border border-white/20">
         <h2 className="text-3xl font-bold mb-6 text-center text-white bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text">
-          Reset Password
+          Reset Password 
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

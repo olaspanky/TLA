@@ -205,22 +205,22 @@ const Topbar = () => {
   if (!activeAccount) return null;
 
   return (
-    <div className="w-full h-[40vh] xl:h-[30vh] bg-[#000A48] flex flex-col gap-4 sm:gap-3 md:gap-3 lg:gap-3 p-3 px-9 xl:px-20">
+    <div className="w-full lg:h-[40vh] xl:h-[30vh] bg-[#000A48] flex flex-col gap-4 sm:gap-3 md:gap-3 lg:gap-3 p-3 xl:px-9 xl:px-20">
       {/* Top Section: Logo, Search, and Actions */}
       <div className="flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <img src={logo} className="w-12 sm:w-16 md:w-20" alt="Logo" />
+          <img src={logo} className="w-12 sm:w-8 lg:w-16 xl:w-20" alt="Logo" />
         </div>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-2 lg:gap-3">
+        <div className="hidden xl:flex items-center gap-2 lg:gap-3">
           {/* Search */}
           <div className="relative">
             <input
               type="text"
               placeholder="search anything"
-              className="bg-[#2A406F] text-white placeholder-gray-400 rounded-full px-3 lg:px-4 py-1 lg:py-2 focus:outline-none text-sm w-32 lg:w-auto"
+              className="bg-[#2A406F] text-white placeholder-gray-400 rounded-full px-3 xl:px-4 py-1 xl:py-2 focus:outline-none text-sm w-32 lg:w-auto"
             />
             <span className="absolute right-2 lg:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
               Q
@@ -348,7 +348,7 @@ const Topbar = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className="mobile-menu-trigger md:hidden text-white p-2"
+          className="mobile-menu-trigger xl:hidden text-white p-2"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle mobile menu"
         >
@@ -360,7 +360,7 @@ const Topbar = () => {
       {isMobileMenuOpen && (
         <div
           ref={mobileMenuRef}
-          className="md:hidden fixed top-0 right-0 h-full w-64 bg-[#2A406F] shadow-lg z-50 overflow-y-auto transition-transform duration-300 ease-in-out"
+          className="xl:hidden fixed  h-full w-64 bg-[#2A406F] shadow-lg z-50 overflow-y-auto transition-transform duration-300 ease-in-out"
         >
           <div className="p-4 border-b border-gray-600 flex justify-between items-center">
             <h3 className="text-white text-lg font-semibold">Menu</h3>
