@@ -9,10 +9,10 @@ const ScrollArrows = ({ scrollContainerRef }) => {
     if (scrollContainerRef.current) {
       scrollIntervalRef.current = setInterval(() => {
         scrollContainerRef.current.scrollBy({
-          top: direction === 'up' ? -10 : 10, // Smaller increments for smoother scrolling
+          top: direction === 'up' ? -100 : 100, // Smaller increments for smoother scrolling
           behavior: 'smooth',
         });
-      }, 1); // Adjust interval for scroll speed (lower = faster)
+      }, 100); // Adjust interval for scroll speed (lower = faster)
     }
   };
 
