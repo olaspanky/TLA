@@ -1,253 +1,77 @@
-// import React, { useState } from "react";
-// import { useForgotPasswordMutation } from "../redux/slices/api/authApiSlice";
-
-// const ForgotPassword = () => {
-//     const [email, setEmail] = useState("");
-//     const [securityAnswer, setSecurityAnswer] = useState("");
-//     const [newPassword, setNewPassword] = useState("");
-//     const [message, setMessage] = useState("");
-//     const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
-
-//     const handleSubmit = async (e) => {
-//         e.preventDefault();
-//         try {
-//             const response = await forgotPassword({ email, securityAnswer, newPassword }).unwrap();
-//             setMessage(response.message || "Password reset successful!");
-//         } catch (error) {
-//             setMessage(error?.data?.message || "Password reset failed.");
-//         }
-//     };
-
-//     return (
-//         <div className="flex items-center justify-center  bg-gray-100">
-//         <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-//             <h2 className="text-2xl font-semibold text-center text-gray-800 mb-6">Forgot Password</h2>
-//             <form onSubmit={handleSubmit} className="space-y-6">
-//                 <div>
-//                     <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-//                         Email
-//                     </label>
-//                     <input
-//                         type="email"
-//                         id="email"
-//                         value={email}
-//                         onChange={(e) => setEmail(e.target.value)}
-//                         required
-//                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                     />
-//                 </div>
-//                 <div>
-//                     <label htmlFor="securityAnswer" className="block text-sm font-medium text-gray-700">
-//                         Security Answer
-//                     </label>
-//                     <input
-//                         type="text"
-//                         id="securityAnswer"
-//                         value={securityAnswer}
-//                         onChange={(e) => setSecurityAnswer(e.target.value)}
-//                         required
-//                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                     />
-//                 </div>
-//                 <div>
-//                     <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-//                         New Password
-//                     </label>
-//                     <input
-//                         type="password"
-//                         id="newPassword"
-//                         value={newPassword}
-//                         onChange={(e) => setNewPassword(e.target.value)}
-//                         required
-//                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                     />
-//                 </div>
-//                 <button
-//                     type="submit"
-//                     disabled={isLoading}
-//                     className={`w-full py-2 px-4 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-300 ${
-//                         isLoading ? "opacity-50 cursor-not-allowed" : ""
-//                     }`}
-//                 >
-//                     {isLoading ? "Resetting..." : "Reset Password"}
-//                 </button>
-//             </form>
-//             {message && <p className="mt-4 text-center text-gray-600">{message}</p>}
-//         </div>
-//     </div>
-//     );
-// };
-
-// export default ForgotPassword;
-
-
-import React, { useState } from "react";
 import { useForgotPasswordMutation } from "../redux/slices/api/authApiSlice";
+import { useState } from "react";
 
-const ForgotPassword = () => {
-    const [email, setEmail] = useState("");
-    const [securityAnswer, setSecurityAnswer] = useState("");
-    const [securityQuestion, setSecurityQuestion] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [message, setMessage] = useState("");
-    const [step, setStep] = useState(1); // Step management
-    const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
+const ForgotPasswordForm = () => {
+  const [forgotPassword, { isLoading, isError, isSuccess, error }] = useForgotPasswordMutation();
+  const [email, setEmail] = useState(""); // Controlled input for email
+  const [showSuccess, setShowSuccess] = useState(false); // State for success message
 
-    const handleEmailSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            // Simulate API call to get the security question
-            const response = await forgotPassword({ email }).unwrap();
-            if (response.securityQuestion) {
-                setSecurityQuestion(response.securityQuestion); // Save the security question
-                setStep(2); // Move to the next step
-            } else {
-                setMessage("Security question not found for this email.");
-            }
-        } catch (error) {
-            setMessage(error?.data?.message || "Failed to fetch security question.");
-        }
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await forgotPassword({ email });
+      console.log("API Response:", response);
+      if (response?.data?.success) {
+        setShowSuccess(true); // Show success message on successful response
+      }
+    } catch (err) {
+      console.error("Forgot password error:", err);
+      if (err?.data?.message) {
+        console.error("Error message from server:", err.data.message);
+      } else {
+        console.error("Network or client error:", err.message || err);
+      }
+    }
+  };
 
-    const handleSecurityAnswerSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            // Move to the next step after verifying the security answer
-            const response = await forgotPassword({ email, securityAnswer }).unwrap();
-            if (response.validAnswer) {
-                setStep(3); // Proceed to password reset
-            } else {
-                setMessage("Incorrect security answer. Please try again.");
-            }
-        } catch (error) {
-            setMessage(error?.data?.message || "Failed to verify security answer.");
-        }
-    };
-
-    const handlePasswordReset = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await forgotPassword({ email, newPassword }).unwrap();
-            setMessage(response.message || "Password reset successful!");
-            
-            // Close the modal after success
-            if (response.success) {
-                setTimeout(() => {
-                    setIsForgotPasswordOpen(false);
-                }, 1000); // Optionally add a small delay to show the success message
-            }
-            
-            setStep(1); // Reset form
-        } catch (error) {
-            setMessage(error?.data?.message || "Password reset failed.");
-        }
-    };
-
-    return (
-        <div className="flex items-center justify-center bg-gray-100 min-h-screen">
-            <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-                <h2 className="text-2xl font-semibold text-center text-gray-800 mb-6">
-                    Forgot Password
-                </h2>
-
-                {step === 1 && (
-                    <form onSubmit={handleEmailSubmit} className="space-y-6">
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email
-                            </label>
-                            <input
-                                type="email"
-                                id="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full py-2 px-4 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-300 ${
-                                isLoading ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
-                        >
-                            {isLoading ? "Verifying..." : "Next"}
-                        </button>
-                    </form>
-                )}
-
-                {step === 2 && (
-                    <form onSubmit={handleSecurityAnswerSubmit} className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Security Question
-                            </label>
-                            <p className="mt-1 text-gray-800 font-semibold">{securityQuestion}</p>
-                        </div>
-                        <div>
-                            <label
-                                htmlFor="securityAnswer"
-                                className="block text-sm font-medium text-gray-700"
-                            >
-                                Your Answer
-                            </label>
-                            <input
-                                type="text"
-                                id="securityAnswer"
-                                value={securityAnswer}
-                                onChange={(e) => setSecurityAnswer(e.target.value)}
-                                required
-                                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full py-2 px-4 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-300 ${
-                                isLoading ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
-                        >
-                            {isLoading ? "Verifying..." : "Next"}
-                        </button>
-                    </form>
-                )}
-
-{step === 3 && (
-                    <form onSubmit={handlePasswordReset} className="space-y-6">
-                        <div>
-                            <label
-                                htmlFor="newPassword"
-                                className="block text-sm font-medium text-gray-700"
-                            >
-                                New Password
-                            </label>
-                            <input
-                                type="password"
-                                id="newPassword"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                required
-                                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full py-2 px-4 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-300 ${
-                                isLoading ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
-                        >
-                            {isLoading ? "Resetting..." : "Reset Password"}
-                        </button>
-                    </form>
-                )}
-
-                {message && <p className="mt-4 text-center text-gray-600">{message}</p>}
-            </div>
-        </div>
-    );
+  return (
+    <div className="p-12 flex items-center justify-center bg-blue-900">
+      <div className="w-full max-w-md p-8 bg-white/10 backdrop-blur-md rounded-xl shadow-2xl border border-white/20">
+        <h2 className="text-3xl font-bold mb-6 text-center text-white bg-blue-600 bg-clip-text">
+          Forgot Password
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              className="w-full px-4 py-3 rounded-lg bg-white/5 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-blue-500/50 transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Sending..." : "Request Reset"}
+          </button>
+          {isError && (
+            <p className="text-red-400 text-sm mt-2">
+              {error?.data?.message || "An error occurred. Please try again."}
+            </p>
+          )}
+          {isSuccess && showSuccess && (
+            <p className="text-green-400 text-sm mt-2">
+              Reset email sent! Check your inbox.
+            </p>
+          )}
+        </form>
+        <p className="mt-4 text-center text-gray-400 text-sm">
+          Remember your password?{" "}
+          <a href="/login" className="text-blue-400 hover:underline">
+            Sign in
+          </a>
+        </p>
+      </div>
+    </div>
+  );
 };
 
-export default ForgotPassword;
-
+export default ForgotPasswordForm;

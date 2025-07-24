@@ -25,6 +25,7 @@ import Admin3 from "./pages/AdminPT";
 import SAdmin1 from "./pages/SAdmin1";
 import SAdmin2 from "./pages/SAdmin2";
 import SAdmin3 from "./pages/Admindevelopment";
+import ResetPasswordPage from "./pages/reset/[token]"; // Import the correct component
 import { selectCurrentUser } from "./redux/slices/authSlice";
 
 function Layout() {
@@ -123,6 +124,7 @@ function App() {
           <Route path='/sadmin2' element={<SAdmin2 />} />
           <Route path='/sadmin3' element={<SAdmin3 />} />
           <Route path='/adminprogress' element={<AdminProgress />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         </Route>
 
         <Route path='/log-in' element={<Login />} />
