@@ -4,19 +4,32 @@ import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
 const ScrollArrows = ({ scrollContainerRef }) => {
   const scrollIntervalRef = useRef(null);
 
-  // Start scrolling in the specified direction
+  // Single tap/click scroll (discrete)
+  const scrollUp = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ top: -200, behavior: 'smooth' });
+    }
+  };
+
+  const scrollDown = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ top: 200, behavior: 'smooth' });
+    }
+  };
+
+  // Start continuous scrolling for hold
   const startScrolling = (direction) => {
     if (scrollContainerRef.current) {
       scrollIntervalRef.current = setInterval(() => {
         scrollContainerRef.current.scrollBy({
-          top: direction === 'up' ? -100 : 100, // Smaller increments for smoother scrolling
+          top: direction === 'up' ? -100 : 100, // Smaller increments for smooth hold
           behavior: 'smooth',
         });
-      }, 100); // Adjust interval for scroll speed (lower = faster)
+      }, 100); // Adjust for scroll speed
     }
   };
 
-  // Stop scrolling
+  // Stop continuous scrolling
   const stopScrolling = () => {
     if (scrollIntervalRef.current) {
       clearInterval(scrollIntervalRef.current);
@@ -27,10 +40,11 @@ const ScrollArrows = ({ scrollContainerRef }) => {
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
       <button
-        onMouseDown={() => startScrolling('up')}
-        onMouseUp={stopScrolling}
-        onMouseLeave={stopScrolling}
-        onTouchStart={() => startScrolling('up')} // Support touch devices
+        onClick={scrollUp} // For single tap/click
+        onPointerDown={() => startScrolling('up')} // For hold (touchpad/mouse/touch)
+        onPointerUp={stopScrolling}
+        onPointerLeave={stopScrolling}
+        onTouchStart={() => startScrolling('up')} // Extra touch support
         onTouchEnd={stopScrolling}
         className="p-3 text-white bg-[#000A48] rounded-full hover:bg-[#3A507F] transition-colors shadow-md"
         aria-label="Scroll Up"
@@ -38,10 +52,11 @@ const ScrollArrows = ({ scrollContainerRef }) => {
         <FaArrowUp className="w-4 h-4" />
       </button>
       <button
-        onMouseDown={() => startScrolling('down')}
-        onMouseUp={stopScrolling}
-        onMouseLeave={stopScrolling}
-        onTouchStart={() => startScrolling('down')} // Support touch devices
+        onClick={scrollDown} // For single tap/click
+        onPointerDown={() => startScrolling('down')} // For hold (touchpad/mouse/touch)
+        onPointerUp={stopScrolling}
+        onPointerLeave={stopScrolling}
+        onTouchStart={() => startScrolling('down')} // Extra touch support
         onTouchEnd={stopScrolling}
         className="p-3 text-white bg-[#000A48] rounded-full hover:bg-[#3A507F] transition-colors shadow-md"
         aria-label="Scroll Down"
