@@ -54,9 +54,9 @@ const Login = () => {
 
   return (
     <div className="w-full min-h-screen flex bg-gray-50">
-      <div className="w-full flex">
+      <div className="w-full flex p-1">
         {/* Left Side - Hero Section */}
-        <div className="hidden lg:flex lg:w-1/2 bg-[#000A48] relative overflow-hidden">
+        <div className="hidden lg:flex lg:w-1/2 bg-[#000A48] rounded-[20px]  relative overflow-hidden">
           <div className="absolute top-8 left-8 flex items-center space-x-2">
             <div className="flex justify-center items-center">
               <img src={logo} alt="Target Illustration" className="w- h-auto" />
