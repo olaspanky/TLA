@@ -16,11 +16,16 @@ import {
   useAssignUserDetailsMutation,
 } from '../../redux/slices/api/usersApiSlice';
 import { useGetDepartmentsQuery } from '../../redux/slices/api/departmentApiSlice';
+import { selectCurrentUser } from "../../redux/slices/authSlice"; 
 import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
 
 const AdminUsers = () => {
-  const { user: currentUser } = useSelector((state) => state.auth);
+  const currentUser = useSelector(selectCurrentUser);
+  const authState = useSelector((state) => state.auth);
+
+  console.log("Current auth state:", authState);
+  console.log("Current user:", currentUser);
   const {
     data: usersData,
     isLoading: isUsersLoading,
@@ -70,7 +75,7 @@ const AdminUsers = () => {
 
   const getReportingToName = (reportingTo) => {
     if (!reportingTo || reportingTo.length === 0) return 'None';
-    const reportingToId = reportingTo[0]; // Use the first ID directly
+    const reportingToId = reportingTo[0]; 
     const manager = userOptions.find((u) => u.id === reportingToId);
     return manager ? `${manager.name} (${manager.email})` : 'Unknown';
   };
@@ -122,9 +127,12 @@ const AdminUsers = () => {
     setEditFormData((prev) => ({
       ...prev,
       [user._id]: {
-        role: user.role || '',
-        department: user.department?._id || user.department || '',
-        reportingTo: user.reportingTo && user.reportingTo.length > 0 ? user.reportingTo[0] : '',
+        role: user.role || "",
+        department: user.department?._id || user.department || "",
+        reportingTo:
+          user.reportingTo && user.reportingTo.length > 0
+            ? user.reportingTo[0]
+            : "",
       },
     }));
   };
@@ -141,30 +149,42 @@ const AdminUsers = () => {
   };
 
   const handleUpdateUser = async (userId) => {
+    console.log("Current user:", currentUser);
+
     const userData = editFormData[userId];
+    console.log("User data being edited:", userData);
     if (!userData?.role) {
-      toast.error('Role is required');
+      toast.error("Role is required");
       return;
     }
 
     if (!roleOptions.includes(userData.role)) {
-      toast.error('Invalid role selected');
+      toast.error("Invalid role selected");
       return;
     }
 
-    if (currentUser?.role === 'super_admin' && userData.reportingTo) {
-      const selectedUser = userOptions.find((u) => u.id === userData.reportingTo);
-      if (!selectedUser) {
-        toast.error('Selected reporting manager is invalid or does not exist');
-        return;
-      }
-      if (!['admin', 'manager'].includes(selectedUser.role)) {
-        toast.error('Reporting manager must have role "admin" or "manager"');
-        return;
-      }
-      if (userData.reportingTo === userId) {
-        toast.error('User cannot report to themselves');
-        return;
+    if (
+      currentUser?.role === "super_admin" &&
+      userData.reportingTo !== undefined
+    ) {
+      if (userData.reportingTo !== "") {
+        const selectedUser = userOptions.find(
+          (u) => u.id === userData.reportingTo
+        );
+        if (!selectedUser) {
+          toast.error(
+            "Selected reporting manager is invalid or does not exist"
+          );
+          return;
+        }
+        if (!["admin", "manager"].includes(selectedUser.role)) {
+          toast.error('Reporting manager must have role "admin" or "manager"');
+          return;
+        }
+        if (userData.reportingTo === userId) {
+          toast.error("User cannot report to themselves");
+          return;
+        }
       }
     }
 
@@ -174,32 +194,41 @@ const AdminUsers = () => {
         id: userId,
         role: userData.role,
         departmentId: userData.department || null,
-        reportingTo: currentUser?.role === 'super_admin' ? userData.reportingTo || null : undefined,
       };
+
+  
+      if (currentUser?.role === "super_admin") {
+        payload.reportingTo = userData.reportingTo ?? null;
+      }
+
+      console.log("Submitting payload:", payload);
       await assignUserDetails(payload).unwrap();
-      toast.success('User details assigned successfully');
+      toast.success("User details assigned successfully");
+
       setEditUserIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(userId);
         return newSet;
       });
+
       setEditFormData((prev) => {
         const newData = { ...prev };
         delete newData[userId];
         return newData;
       });
+
       refetch();
     } catch (err) {
       const errorMessage =
         err?.data?.error ||
         err?.data?.message ||
         (err.status === 400
-          ? 'Invalid input data. Please check the reporting manager selection.'
+          ? "Invalid input data. Please check the reporting manager selection."
           : err.status === 403
-          ? 'Only super_admin can assign reportingTo'
+          ? "Only super_admin can assign reportingTo"
           : err.status === 404
-          ? 'User or department not found'
-          : 'Failed to assign user details');
+          ? "User or department not found"
+          : "Failed to assign user details");
       toast.error(errorMessage);
     } finally {
       setUpdatingUserId(null);
@@ -292,7 +321,9 @@ const AdminUsers = () => {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">User Management</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+        User Management
+      </h1>
 
       <div className="mb-6">
         <div className="relative max-w-md">
@@ -312,40 +343,40 @@ const AdminUsers = () => {
           <thead className="bg-gray-50">
             <tr>
               <th
-                onClick={() => handleSort('name')}
+                onClick={() => handleSort("name")}
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
               >
-                Name {renderSortIcon('name')}
+                Name {renderSortIcon("name")}
               </th>
               <th
-                onClick={() => handleSort('email')}
+                onClick={() => handleSort("email")}
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
               >
-                Email {renderSortIcon('email')}
+                Email {renderSortIcon("email")}
               </th>
               <th
-                onClick={() => handleSort('role')}
+                onClick={() => handleSort("role")}
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
               >
-                Role {renderSortIcon('role')}
+                Role {renderSortIcon("role")}
               </th>
               <th
-                onClick={() => handleSort('department')}
+                onClick={() => handleSort("department")}
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
               >
-                Department {renderSortIcon('department')}
+                Department {renderSortIcon("department")}
               </th>
               <th
-                onClick={() => handleSort('reportingTo')}
+                onClick={() => handleSort("reportingTo")}
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
               >
-                Reports To {renderSortIcon('reportingTo')}
+                Reports To {renderSortIcon("reportingTo")}
               </th>
               <th
-                onClick={() => handleSort('isActive')}
+                onClick={() => handleSort("isActive")}
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
               >
-                Status {renderSortIcon('isActive')}
+                Status {renderSortIcon("isActive")}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -361,7 +392,10 @@ const AdminUsers = () => {
               </tr>
             ) : (
               paginatedUsers.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={user._id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.name}
                   </td>
@@ -372,7 +406,7 @@ const AdminUsers = () => {
                     {editUserIds.has(user._id) ? (
                       <select
                         name="role"
-                        value={editFormData[user._id]?.role || ''}
+                        value={editFormData[user._id]?.role || ""}
                         onChange={(e) => handleEditFormChange(user._id, e)}
                         className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
@@ -391,10 +425,12 @@ const AdminUsers = () => {
                     {editUserIds.has(user._id) ? (
                       <select
                         name="department"
-                        value={editFormData[user._id]?.department || ''}
+                        value={editFormData[user._id]?.department || ""}
                         onChange={(e) => handleEditFormChange(user._id, e)}
                         className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        disabled={isDepartmentsLoading || departmentOptions.length === 0}
+                        disabled={
+                          isDepartmentsLoading || departmentOptions.length === 0
+                        }
                       >
                         <option value="">No Department</option>
                         {departmentOptions.map((dept) => (
@@ -408,11 +444,14 @@ const AdminUsers = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editUserIds.has(user._id)  ? (
+                    {editUserIds.has(user._id) ? (
                       <select
                         name="reportingTo"
-                        value={editFormData[user._id]?.reportingTo || ''}
-                        onChange={(e) => handleEditFormChange(user._id, e)}
+                        value={editFormData[user._id]?.reportingTo ?? ""}
+                        onChange={(e) => {
+                          handleEditFormChange(user._id, e);
+                          e.target.blur();
+                        }}
                         className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         disabled={userOptions.length === 0}
                       >
@@ -425,14 +464,16 @@ const AdminUsers = () => {
                             </option>
                           ))}
                       </select>
+                    ) : user.reportingTo && user.reportingTo.length > 0 ? (
+                      usersData?.users?.find(
+                        (u) => u._id === user.reportingTo[0]
+                      )?.name || "Unknown"
                     ) : (
-                      user.reportingTo && user.reportingTo.length > 0
-                        ? usersData?.users?.find((u) => u._id === user.reportingTo[0])?.name || 'Unknown'
-                        : 'None'
+                      "None"
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.isActive ? 'Active' : 'Inactive'}
+                    {user.isActive ? "Active" : "Inactive"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex space-x-2">
@@ -440,14 +481,18 @@ const AdminUsers = () => {
                         <>
                           <button
                             onClick={() => handleUpdateUser(user._id)}
-                            disabled={updatingUserId === user._id || isAssigningUser}
+                            disabled={
+                              updatingUserId === user._id || isAssigningUser
+                            }
                             className={`px-3 py-1 text-sm font-medium rounded-md ${
                               updatingUserId === user._id || isAssigningUser
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-600 text-white hover:bg-blue-700"
                             } transition-colors`}
                           >
-                            {updatingUserId === user._id || isAssigningUser ? 'Saving...' : 'Save'}
+                            {updatingUserId === user._id || isAssigningUser
+                              ? "Saving..."
+                              : "Save"}
                           </button>
                           <button
                             onClick={() => handleCancelEdit(user._id)}
@@ -467,21 +512,27 @@ const AdminUsers = () => {
                           </button>
                           <button
                             onClick={() => handleToggleUserStatus(user._id)}
-                            disabled={updatingUserId === user._id || isTogglingStatus}
+                            disabled={
+                              updatingUserId === user._id || isTogglingStatus
+                            }
                             className={`px-3 py-1 text-sm font-medium rounded-md ${
                               updatingUserId === user._id || isTogglingStatus
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                 : user.isActive
-                                ? 'bg-red-600 text-white hover:bg-red-700'
-                                : 'bg-green-600 text-white hover:bg-green-700'
+                                ? "bg-red-600 text-white hover:bg-red-700"
+                                : "bg-green-600 text-white hover:bg-green-700"
                             } transition-colors`}
-                            title={user.isActive ? 'Deactivate User' : 'Activate User'}
+                            title={
+                              user.isActive
+                                ? "Deactivate User"
+                                : "Activate User"
+                            }
                           >
                             {updatingUserId === user._id || isTogglingStatus
-                              ? 'Toggling...'
+                              ? "Toggling..."
                               : user.isActive
-                              ? 'Deactivate'
-                              : 'Activate'}
+                              ? "Deactivate"
+                              : "Activate"}
                           </button>
                           <button
                             onClick={() => handleOpenSubObjectiveModal(user)}
@@ -519,19 +570,26 @@ const AdminUsers = () => {
             <div className="space-y-4">
               {selectedUser.SubObjective ? (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700">Sub-Objective</h4>
+                  <h4 className="text-sm font-medium text-gray-700">
+                    Sub-Objective
+                  </h4>
                   <p className="text-sm text-gray-600">
-                    <strong>Title:</strong> {selectedUser.SubObjective.title || 'No title'}
+                    <strong>Title:</strong>{" "}
+                    {selectedUser.SubObjective.title || "No title"}
                   </p>
                   <p className="text-sm text-gray-600">
-                    <strong>Description:</strong> {selectedUser.SubObjective.description || 'No description'}
+                    <strong>Description:</strong>{" "}
+                    {selectedUser.SubObjective.description || "No description"}
                   </p>
                   <p className="text-sm text-gray-600">
-                    <strong>Status:</strong> {selectedUser.SubObjective.status || 'Unknown'}
+                    <strong>Status:</strong>{" "}
+                    {selectedUser.SubObjective.status || "Unknown"}
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-600">No sub-objectives assigned.</p>
+                <p className="text-sm text-gray-600">
+                  No sub-objectives assigned.
+                </p>
               )}
             </div>
             <div className="flex justify-end mt-6">
@@ -549,9 +607,12 @@ const AdminUsers = () => {
       {totalPages > 1 && (
         <div className="mt-6 flex justify-between items-center">
           <div className="text-sm text-gray-600">
-            Showing {(currentPage - 1) * usersPerPage + 1} to{' '}
-            {Math.min(currentPage * usersPerPage, sortedAndFilteredUsers.length)} of{' '}
-            {sortedAndFilteredUsers.length} users
+            Showing {(currentPage - 1) * usersPerPage + 1} to{" "}
+            {Math.min(
+              currentPage * usersPerPage,
+              sortedAndFilteredUsers.length
+            )}{" "}
+            of {sortedAndFilteredUsers.length} users
           </div>
           <div className="flex space-x-2">
             <button
@@ -559,8 +620,8 @@ const AdminUsers = () => {
               disabled={currentPage === 1}
               className={`px-3 py-1 text-sm font-medium rounded-md ${
                 currentPage === 1
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               Previous
@@ -571,8 +632,8 @@ const AdminUsers = () => {
                 onClick={() => handlePageChange(index + 1)}
                 className={`px-3 py-1 text-sm font-medium rounded-md ${
                   currentPage === index + 1
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 {index + 1}
@@ -583,8 +644,8 @@ const AdminUsers = () => {
               disabled={currentPage === totalPages}
               className={`px-3 py-1 text-sm font-medium rounded-md ${
                 currentPage === totalPages
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               Next
