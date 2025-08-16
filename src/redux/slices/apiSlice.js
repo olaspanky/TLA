@@ -21,8 +21,7 @@ const baseQuery = fetchBaseQuery({
 
 const baseQueryWithFailover = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
-  console.log(primaryUrl, result.error.originalStatus, result.error.status);
-  
+
   if (
     result.error &&
     (result.error.status === 503 || result.error.status === "FETCH_ERROR" || result.error.originalStatus === 404)
