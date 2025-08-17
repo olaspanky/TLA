@@ -22,11 +22,7 @@ const baseQuery = fetchBaseQuery({
 const baseQueryWithFailover = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
 
-  console.log(
-    result.error.originalStatus,
-    ">>>>>>>",
-    result.error.status, "........."
-  );
+
   const shouldFailover =
     result.error &&
     ((typeof result.error.originalStatus === "number" &&
