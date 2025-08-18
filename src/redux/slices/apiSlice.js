@@ -2,11 +2,11 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 
-// const primaryUrl = import.meta.env.VITE_API_PRIMARY_URL;
-// const backupUrl = import.meta.env.VITE_API_BACKUP_URL;
+const primaryUrl = import.meta.env.VITE_API_PRIMARY_URL;
+const backupUrl = import.meta.env.VITE_API_BACKUP_URL;
 
-const primaryUrl = "http://localhost:8800/api"
-const backupUrl = "http://localhost:8800/api"
+// const primaryUrl = "http://localhost:8800/api"
+// const backupUrl = "http://localhost:8800/api"
 
 const baseQuery = fetchBaseQuery({
   
